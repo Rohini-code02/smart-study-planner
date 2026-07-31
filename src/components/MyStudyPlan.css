@@ -1,0 +1,203 @@
+/* ==========================================================================
+   MY STUDY PLAN CSS
+   ========================================================================== */
+
+/* 
+  Why this CSS section exists (.plan-container):
+  Wraps the entire page content. We use padding to keep content away from the edges 
+  of the screen, and max-width so the lists don't stretch too wide and become 
+  hard to read on ultra-wide monitors.
+*/
+.plan-container {
+  padding: 2.5rem;
+  max-width: 1100px;
+  margin: 0 auto; /* Perfectly centers the whole container on the screen */
+}
+
+/* 
+  Why this CSS section exists (.plan-header):
+  Styles the top title area. Centers the text horizontally and adds bottom margin 
+  to push the summary cards down, creating visual breathing room.
+*/
+.plan-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.plan-header h2 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.plan-header p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   SUMMARY CARDS (Completed / Pending)
+   ========================================================================== */
+
+/* 
+  Why this CSS section exists (.plan-summary-cards):
+  Uses CSS Grid to perfectly place the two summary cards side-by-side in 
+  two exactly equal columns.
+*/
+.plan-summary-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 1fr = 1 fraction (equal parts) */
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* 
+  Why this CSS section exists (.summary-card):
+  Styles the individual white boxes. Adds padding, soft shadows, and rounded 
+  corners to make them look like premium, floating widgets.
+*/
+.summary-card {
+  background-color: var(--bg-secondary); transition: background-color 0.3s ease;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+/* 
+  Why these CSS sections exist (.completed, .pending):
+  Adds a colored top border to quickly, subconsciously differentiate the 
+  "Good/Done" card (Green) from the "Warning/To-Do" card (Orange).
+*/
+.summary-card.completed {
+  border-top: 5px solid #2ecc71; /* Success Green */
+}
+
+.summary-card.pending {
+  border-top: 5px solid #f39c12; /* Warning Orange */
+}
+
+/* Small heading inside the card */
+.summary-card h3 {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* 
+  Why this CSS section exists (.summary-number):
+  Makes the main metric (the number of tasks) huge and bold so it's instantly readable.
+*/
+.summary-number {
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.summary-text {
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   TIMELINE GRID (Today, Tomorrow, Weekly)
+   ========================================================================== */
+
+/* 
+  Why this CSS section exists (.plan-timeline-grid):
+  Uses Grid to beautifully organize the three timeframe cards. By using auto-fit, 
+  they will sit in a row on big desktop screens, but intelligently stack 
+  vertically on small mobile phones without breaking the layout.
+*/
+.plan-timeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+/* 
+  Why this CSS section exists (.plan-card):
+  Styles the containers for each timeline list to look perfectly identical 
+  in shape and background color, creating consistency.
+*/
+.plan-card {
+  background-color: var(--bg-secondary); transition: background-color 0.3s ease;
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.plan-card h4 {
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #eee; /* Adds a nice grey divider line under the title */
+}
+
+/* 
+  Why this CSS section exists (.plan-list):
+  Removes default bullet points for a much cleaner, modern look.
+*/
+.plan-list {
+  list-style: none;
+  padding: 0;
+}
+
+/* 
+  Why this CSS section exists (.plan-list li):
+  Styles each individual item in the list. Uses flexbox to forcefully place 
+  the time on the far left and the task name on the right.
+*/
+.plan-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f5f5f5; /* Subtle divider between individual tasks */
+}
+
+/* Removes the divider line from the very last item in the list so it looks neat */
+.plan-list li:last-child {
+  border-bottom: none;
+}
+
+/* 
+  Why this CSS section exists (.time):
+  Makes the time stand out by coloring it blue and making it bold. 
+  flex-shrink: 0 prevents the time text from getting squished if the task name is long.
+*/
+.time {
+  font-weight: bold;
+  color: var(--accent-primary);
+  font-size: 0.95rem;
+  flex-shrink: 0; 
+  width: 100px;
+}
+
+/* 
+  Why this CSS section exists (.task):
+  Styles the actual task description text. 
+  flex-grow: 1 allows the task text to stretch and take up all remaining empty space.
+*/
+.task {
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  flex-grow: 1; 
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (Media Queries)
+   ========================================================================== */
+
+/* 
+  Why this CSS section exists (@media max-width: 768px):
+  On smaller screens (like iPads or phones), the Completed/Pending summary cards 
+  will get too squished if they stay side-by-side. This media query activates 
+  on small screens and forces them to stack vertically (1 column) for better readability.
+*/
+@media (max-width: 768px) {
+  .plan-summary-cards {
+    grid-template-columns: 1fr; /* Switch from 2 columns to 1 column */
+  }
+}

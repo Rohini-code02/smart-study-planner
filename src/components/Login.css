@@ -1,0 +1,118 @@
+/* ==========================================================================
+   LOGIN PAGE STYLES
+   ========================================================================== */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--bg-tertiary);
+  transition: background-color 0.3s ease;
+}
+
+.login-box {
+  background-color: var(--bg-secondary);
+  padding: 3rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px var(--shadow-color);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.login-box h2 {
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.login-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.input-group input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+}
+
+.input-group input:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+.forgot-password {
+  text-align: right;
+}
+
+.forgot-password a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.forgot-password a:hover {
+  text-decoration: underline;
+}
+
+.btn-login-submit {
+  background-color: var(--accent-primary);
+  color: white;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-login-submit:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-login-submit:active {
+  transform: scale(0.97);
+}
+
+.signup-link {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.signup-link a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}

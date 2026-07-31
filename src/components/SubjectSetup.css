@@ -1,0 +1,151 @@
+/* ==========================================================================
+   SUBJECT SETUP PAGE CSS
+   ========================================================================== */
+
+/* 
+  Why this CSS section is created (.setup-container):
+  This is the main wrapper for the whole page. We use display: flex and 
+  min-height: 100vh to vertically and horizontally center the setup form 
+  perfectly in the middle of the screen.
+*/
+.setup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--bg-tertiary);
+  padding: 2rem;
+}
+
+/* 
+  Why this CSS section is created (.setup-box):
+  This is the actual white card that contains our form fields.
+  It gives the form boundaries, a white background, rounded corners, 
+  and a shadow so it stands out clearly from the grey background.
+*/
+.setup-box {
+  background-color: var(--bg-secondary); transition: background-color 0.3s ease;
+  padding: 2.5rem 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+/* 
+  Why this CSS section is created (.setup-box h2):
+  Styles the main title of the form to be large and blue, matching our brand identity.
+*/
+.setup-box h2 {
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+/* 
+  Why this CSS section is created (.setup-subtitle):
+  Provides a small description text under the title. We center it and make it grey 
+  so it is legible but not overwhelming.
+*/
+.setup-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* 
+  Why this CSS section is created (.setup-form):
+  Uses flexbox column layout to beautifully stack all the input groups vertically 
+  with consistent spacing (gap) between them.
+*/
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* 
+  Why this CSS section is created (.input-group select):
+  In previous pages we styled "input" tags, but here we also use "select" dropdowns.
+  We want the dropdowns to look exactly identical to the text inputs, so they get 
+  the same padding, borders, and border-radius.
+*/
+.input-group select {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 1rem;
+  background-color: var(--bg-secondary); transition: background-color 0.3s ease; /* Ensures the dropdown background is clean white */
+  transition: border-color 0.3s;
+  cursor: pointer;
+}
+
+/* Change the border to blue when the user clicks the dropdown to make a choice */
+.input-group select:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+/* 
+  Why this CSS section is created (.setup-buttons):
+  Uses flexbox to place the Cancel and Save buttons side-by-side on the same row.
+  justify-content: space-between pushes them to opposite ends of the form.
+*/
+.setup-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  gap: 1rem;
+}
+
+/* 
+  Why this CSS section is created (.btn-cancel):
+  The cancel button should not be as prominent as the save button.
+  We give it a transparent background and a grey border so it looks like a secondary action.
+*/
+.btn-cancel {
+  flex: 1; /* Makes the button take up equal space with the other button */
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 0.85rem;
+  border-radius: 5px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+/* Slightly darken the cancel button background when hovered */
+.btn-cancel:hover {
+  background-color: var(--bg-tertiary);
+}
+
+/* 
+  Why this CSS section is created (.btn-save):
+  The save button is the most important action on the page.
+  We give it a solid blue background so the user's eye is immediately drawn to it.
+*/
+.btn-save {
+  flex: 1; /* Makes the button take up equal space alongside Cancel */
+  background-color: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 5px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+/* Darken the save button when hovered */
+.btn-save:hover {
+  background-color: var(--accent-hover);
+}
+
+/* Shrink the button slightly when physically clicked for realism */
+.btn-save:active {
+  transform: scale(0.97);
+}

@@ -1,0 +1,286 @@
+/* ==========================================================================
+   1. GLOBAL STYLES & CSS VARIABLES (LIGHT & DARK THEMES)
+   ========================================================================== */
+
+/* LIGHT MODE VARIABLES (Default) */
+:root {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eef5ff;
+  --text-primary: #333333;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --accent-primary: #4a90e2;
+  --accent-hover: #357abd;
+  --accent-warning: #ff9f00;
+  --accent-warning-hover: #e68f00;
+  --border-color: #dddddd;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --footer-bg: #333333;
+  --footer-text: #ffffff;
+}
+
+/* DARK MODE VARIABLES */
+[data-theme='dark'] {
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2c2c38;
+  --text-primary: #f5f5f5;
+  --text-secondary: #cccccc;
+  --text-muted: #999999;
+  --accent-primary: #8b5cf6; /* A vibrant purple looks amazing on dark mode! */
+  --accent-hover: #7c3aed;
+  --accent-warning: #f59e0b;
+  --accent-warning-hover: #d97706;
+  --border-color: #333333;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --footer-bg: #0a0a0a;
+  --footer-text: #888888;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ==========================================================================
+   2. NAVBAR SECTION
+   ========================================================================== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--bg-secondary);
+  box-shadow: 0 2px 4px var(--shadow-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.logo h1 {
+  color: var(--accent-primary);
+  font-size: 1.5rem;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: var(--accent-primary);
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-theme-toggle:hover {
+  transform: scale(1.1);
+  background-color: transparent;
+}
+
+button {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  transition: background-color 0.3s, transform 0.1s, border-color 0.3s, color 0.3s;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+.btn-login {
+  background-color: transparent;
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
+
+.btn-login:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.btn-signup {
+  background-color: var(--accent-primary);
+  color: white;
+}
+
+.btn-signup:hover {
+  background-color: var(--accent-hover);
+}
+
+/* ==========================================================================
+   3. HERO SECTION
+   ========================================================================== */
+.hero-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 80vh;
+  /* Dark mode hero will use a darker gradient */
+  background: linear-gradient(135deg, var(--accent-primary), #9013fe);
+  color: white;
+  padding: 2rem;
+  transition: background 0.3s ease;
+}
+
+[data-theme='dark'] .hero-section {
+  background: linear-gradient(135deg, #1e1e2f, #3a1c71);
+}
+
+.hero-content h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-primary {
+  background-color: var(--accent-warning);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 25px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-warning-hover);
+}
+
+/* ==========================================================================
+   4. FEATURES SECTION
+   ========================================================================== */
+.features-section {
+  padding: 4rem 2rem;
+  text-align: center;
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease;
+}
+
+.features-section h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+}
+
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap; 
+}
+
+.feature-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  width: 300px;
+  box-shadow: 0 2px 4px var(--shadow-color);
+  transition: transform 0.3s, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-card h3 {
+  color: var(--accent-primary);
+  margin-bottom: 1rem;
+}
+
+/* ==========================================================================
+   5. ABOUT SECTION
+   ========================================================================== */
+.about-section {
+  padding: 4rem 2rem;
+  text-align: center;
+  background-color: var(--bg-tertiary);
+  transition: background-color 0.3s ease;
+}
+
+.about-section h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.about-content p {
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   6. FOOTER SECTION
+   ========================================================================== */
+.footer-section {
+  background-color: var(--footer-bg);
+  color: var(--footer-text);
+  text-align: center;
+  padding: 1.5rem 0;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ==========================================================================
+   7. RESPONSIVE DESIGN
+   ========================================================================== */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column; 
+    gap: 1rem;
+  }
+  
+  .hero-content h2 {
+    font-size: 2rem;
+  }
+  
+  .features-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+}

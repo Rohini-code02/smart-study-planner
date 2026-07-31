@@ -1,0 +1,213 @@
+/* ==========================================================================
+   PROGRESS DASHBOARD CSS
+   ========================================================================== */
+
+/* 
+  Why this CSS section is created (.progress-container):
+  Wraps the entire page content. The max-width (1000px) prevents the charts from 
+  stretching infinitely on huge desktop monitors, keeping the layout looking 
+  tight, readable, and professional.
+*/
+.progress-container {
+  padding: 2.5rem;
+  max-width: 1000px;
+  margin: 0 auto; /* Centers the container in the middle of the screen */
+}
+
+/* Styles the top heading to be centered with breathing room underneath */
+.progress-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.progress-header h2 {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.progress-header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* ==========================================================================
+   QUICK STATS CARDS
+   ========================================================================== */
+
+/* 
+  Why this CSS section is created (.progress-stats-grid):
+  Uses CSS Grid to automatically and perfectly space out the three summary cards.
+  'auto-fit' makes them responsive: they will sit side-by-side on computers, 
+  but will intelligently stack vertically on mobile phones.
+*/
+.progress-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* 
+  Why this CSS section is created (.progress-card):
+  Styles the actual white boxes. We add rounded corners and a soft shadow so they 
+  pop out from the grey background, making them look like physical cards.
+*/
+.progress-card {
+  background-color: var(--bg-secondary); transition: background-color 0.3s ease;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.progress-card h3 {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* 
+  Why this CSS section is created (.card-value):
+  Makes the main number very large. We also use utility classes (.blue, .green, .purple) 
+  below to quickly inject different colors to different numbers for visual flair.
+*/
+.card-value {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+/* Utility color classes */
+.blue { color: var(--accent-primary); }
+.green { color: #2ecc71; }
+.purple { color: #9b59b6; }
+
+.card-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   PROGRESS PERCENTAGE BAR (Inside the Goal Completion Card)
+   ========================================================================== */
+
+/* 
+  Why this CSS section is created (.progress-bar-container):
+  This is the grey, empty background "track" of our progress bar. 
+  It has a fixed height and rounded corners. 'overflow: hidden' ensures the 
+  purple fill doesn't poke out of the rounded corners.
+*/
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background-color: #eee;
+  border-radius: 6px;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  overflow: hidden; 
+}
+
+/* 
+  Why this CSS section is created (.progress-bar-fill):
+  This is the actual purple fill that represents the 84%. Its width is set 
+  dynamically in the React code (using inline styles), but this CSS handles 
+  the beautiful gradient color and the smooth animation.
+*/
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9b59b6, #8e44ad);
+  border-radius: 6px;
+  /* Adds a smooth, professional animation when the bar first loads */
+  transition: width 1s ease-in-out;
+}
+
+/* ==========================================================================
+   WEEKLY PROGRESS CHART (Custom CSS Bar Chart)
+   ========================================================================== */
+
+/* 
+  Why this CSS section is created (.chart-section):
+  Styles the main, large white box that holds our custom bar chart.
+*/
+.chart-section {
+  background-color: var(--bg-secondary); transition: background-color 0.3s ease;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.chart-section h3 {
+  text-align: center;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+}
+
+/* 
+  Why this CSS section is created (.bar-chart-container):
+  Uses flexbox to place all 7 of our chart columns in a horizontal row.
+  'align-items: flex-end' is a crucial trick! It ensures all the bars sit flat 
+  on the "floor" of the chart instead of hanging awkwardly from the ceiling.
+*/
+.bar-chart-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  /* We set a fixed height (250px) so the React percentages know how high to go */
+  height: 250px; 
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #eee; /* Creates the visual "floor" line of the graph */
+}
+
+/* 
+  Why this CSS section is created (.chart-column):
+  A wrapper for the physical bar, the label under it, and the tooltip above it.
+*/
+.chart-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  width: 40px; /* Width of each bar */
+}
+
+/* 
+  Why this CSS section is created (.chart-bar):
+  The physical colored bar. We add a transition so if the data ever changes, 
+  the bar grows or shrinks smoothly like a real animation.
+*/
+.chart-bar {
+  width: 100%;
+  background-color: var(--accent-primary);
+  border-radius: 4px 4px 0 0; /* Rounds only the top corners of the bar */
+  transition: height 0.8s ease-out;
+}
+
+/* Make the bar lighter when hovered to show it is interactive */
+.chart-bar:hover {
+  background-color: #74aef0;
+}
+
+/* 
+  Why this CSS section is created (.chart-tooltip):
+  Shows the exact number of hours floating directly above the bar.
+*/
+.chart-tooltip {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+
+/* 
+  Why this CSS section is created (.chart-label):
+  Shows the day of the week below the bar. We add margin-top to safely push it 
+  down beneath the chart floor line.
+*/
+.chart-label {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}

@@ -1,0 +1,115 @@
+/* ==========================================================================
+   SIGNUP PAGE CSS
+   ========================================================================== */
+
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--bg-tertiary);
+  transition: background-color 0.3s ease;
+}
+
+.signup-box {
+  background-color: var(--bg-secondary);
+  padding: 2.5rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px var(--shadow-color);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.signup-box h2 {
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+
+.signup-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.error-message {
+  color: #e74c3c;
+  background-color: #fadbd8;
+  padding: 0.75rem;
+  border-radius: 5px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.input-group input {
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s, background-color 0.3s, color 0.3s;
+}
+
+.input-group input:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+.btn-signup-submit {
+  background-color: var(--accent-primary);
+  color: white;
+  padding: 0.85rem;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 0.5rem;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-signup-submit:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-signup-submit:active {
+  transform: scale(0.97);
+}
+
+.login-link {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.login-link a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
