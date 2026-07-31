@@ -28,11 +28,20 @@ const connectDB = require('./config/db');
 // Load environment variables immediately so we can securely use them below
 dotenv.config();
 
-// Execute the function to securely connect to MongoDB
-connectDB();
-
 // Create the actual Express application object
 const app = express();
+
+// Execute the function to securely connect to MongoDB.
+// In a serverless environment (Vercel), we must make sure the database is fully 
+// connected BEFORE we process any routes. We do this by adding a global middleware.
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+});
 
 // 3. MIDDLEWARE
 // ============================================================================
