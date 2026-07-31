@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './ProgressDashboard.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // PROGRESS DASHBOARD COMPONENT
 // ============================================================================
@@ -18,8 +20,8 @@ function ProgressDashboard({ token }) {
     const fetchProgress = async () => {
       try {
         const [statsRes, weeklyRes] = await Promise.all([
-          fetch('http://localhost:5000/api/progress/stats', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:5000/api/progress/weekly', { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE_URL}/api/progress/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/progress/weekly`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
         if (statsRes.ok) {

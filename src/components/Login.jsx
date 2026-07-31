@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 // We import a separate CSS file specifically for this component to keep our styles organized.
 import './Login.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // LOGIN COMPONENT
 // ============================================================================
@@ -50,7 +52,7 @@ function Login({ setCurrentPage, handleSetToken }) {
 
     try {
       // Send a POST request to our Node.js login API
-      const response = await fetch('http://localhost:5000/api/users/login', {
+      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

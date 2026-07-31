@@ -101,11 +101,16 @@ app.use('/api/progress', progressRoutes);
 // 5. STARTING THE SERVER
 // ============================================================================
 // We dynamically get the port from the .env file, or default to 5000 if it's missing.
-// DEPLOYMENT NOTE: Hosting platforms like Heroku/Render will automatically 
-// provide a process.env.PORT value. We MUST use their port, which is why this fallback is crucial!
 const PORT = process.env.PORT || 5000;
 
-// Tell the Express app to start listening for incoming requests on the port
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running smoothly on http://localhost:${PORT}`);
-});
+// Only start the HTTP server when running locally (node server.js).
+// On Vercel, the app is exported as a serverless function — app.listen is NOT called.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running smoothly on http://localhost:${PORT}`);
+  });
+}
+
+// Export the app so Vercel's serverless function (backend/api/index.js) can use it.
+module.exports = app;
+

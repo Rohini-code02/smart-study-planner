@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Profile.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // PROFILE COMPONENT
 // ============================================================================
@@ -40,7 +42,7 @@ function Profile({ setCurrentPage, token, handleSetToken }) {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/users/me', {
+        const response = await fetch(`${API_BASE_URL}/api/users/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await response.json();
@@ -66,7 +68,7 @@ function Profile({ setCurrentPage, token, handleSetToken }) {
     if (isEditing) {
       // Save changes
       try {
-        const response = await fetch('http://localhost:5000/api/users/me', {
+        const response = await fetch(`${API_BASE_URL}/api/users/me`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -99,7 +101,7 @@ function Profile({ setCurrentPage, token, handleSetToken }) {
     }
     
     try {
-      const response = await fetch('http://localhost:5000/api/users/password', {
+      const response = await fetch(`${API_BASE_URL}/api/users/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

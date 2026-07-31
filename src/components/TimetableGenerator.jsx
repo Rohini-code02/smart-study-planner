@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './TimetableGenerator.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // TIMETABLE GENERATOR COMPONENT
 // ============================================================================
@@ -36,7 +38,7 @@ function TimetableGenerator({ setCurrentPage, token }) {
       // We need the user's subjects (with exam dates, priorities, difficulty)
       // before we can build a meaningful plan.
       // -----------------------------------------------------------------------
-      const subjectsRes = await fetch('http://localhost:5000/api/subjects', {
+      const subjectsRes = await fetch(`${API_BASE_URL}/api/subjects`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -59,7 +61,7 @@ function TimetableGenerator({ setCurrentPage, token }) {
       // STEP 2: Send subjects to the plan generator API
       // The backend planController will rank by urgency and build the timetable
       // -----------------------------------------------------------------------
-      const response = await fetch('http://localhost:5000/api/plan/generate', {
+      const response = await fetch(`${API_BASE_URL}/api/plan/generate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -2,67 +2,44 @@
 // DATABASE CONFIGURATION (config/db.js)
 // ============================================================================
 // Why this file exists:
-// This file handles the complex logic for connecting our Node.js server to 
-// our MongoDB database (Atlas). By keeping it in the 'config' folder, our main 
-// server.js stays clean and organized.
+// This file handles the logic for connecting our Node.js server to MongoDB Atlas.
+// It also implements connection caching, which is CRITICAL for serverless (Vercel).
+//
+// WHY CONNECTION CACHING?
+// In a traditional server, mongoose.connect() is called ONCE at startup and 
+// the connection stays alive. But Vercel serverless functions are stateless —
+// each request could spin up a fresh function instance. Without caching, 
+// every single API call would try to open a NEW MongoDB connection, quickly
+// exhausting the Atlas connection limit and slowing down every request.
+// By caching the connection on the global object, we reuse it across invocations.
 
-// ============================================================================
-// 1. IMPORTING MONGOOSE
-// ============================================================================
-// We import 'mongoose', which is an Object Data Modeling (ODM) library for MongoDB.
 const mongoose = require('mongoose');
 
-// ============================================================================
-// 2. THE CONNECTION FUNCTION
-// ============================================================================
-// Why this function exists:
-// It attempts to connect to the database securely. It is an "async" function 
-// because connecting over the internet takes time, and we have to "await" the result.
+// Use a module-level cache to avoid reconnecting on every serverless invocation
+let cachedConnection = null;
+
 const connectDB = async () => {
+  // If we already have a live connection, reuse it (serverless performance optimization)
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+
   try {
-    // ========================================================================
-    // EXPLAINING ENVIRONMENT VARIABLES & MONGOOSE.CONNECT()
-    // ========================================================================
-    // ENVIRONMENT VARIABLES (process.env):
-    // A database connection string contains a secret username and password. 
-    // We NEVER hardcode secrets into this file because anyone looking at our code 
-    // (e.g., on GitHub) could steal them. Instead, we store them in a hidden '.env' 
-    // file, which Node.js accesses using 'process.env.MONGO_URI'.
-    //
-    // WHY WE USE mongoose.connect():
-    // Instead of using the native, complex MongoDB driver, we use Mongoose. 
-    // mongoose.connect() abstracts away all the complicated network logic and 
-    // establishes a stable, persistent connection to your Cloud Cluster. It also 
-    // enables us to use Models and Schemas to easily validate our data later!
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    const conn = await mongoose.connect(process.env.MONGO_URI, {
+      // These options prevent deprecation warnings and ensure stable connections
+      bufferCommands: false, // Disable mongoose command buffering for serverless
+    });
     
-    // ========================================================================
-    // 3. SUCCESSFUL CONNECTION HANDLING
-    // ========================================================================
-    // If successful, log the connection host to the terminal so we know it worked!
-    // conn.connection.host tells us EXACTLY which Atlas server we connected to.
-    console.log(`✅ MongoDB Connected successfully: ${conn.connection.host}`);
+    cachedConnection = conn;
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    return conn;
     
   } catch (error) {
-    // ========================================================================
-    // 4. ERROR HANDLING
-    // ========================================================================
-    // If the connection fails (e.g., wrong password, internet down, or network 
-    // access not whitelisted), it immediately jumps to this 'catch' block.
-    
-    // We log the exact error message so we can debug what went wrong.
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    
-    // process.exit(1) forcibly kills the Node.js server. 
-    // Why? If our app relies on a database to work, and the database is unreachable, 
-    // the app shouldn't run at all because it will just crash users' requests.
-    process.exit(1);
+    // In serverless (Vercel), process.exit() is NOT safe — it would crash the entire function.
+    // Instead, we throw the error so the caller can handle it gracefully.
+    throw new Error(`Database connection failed: ${error.message}`);
   }
 };
 
-// ============================================================================
-// 5. EXPORTING THE FUNCTION
-// ============================================================================
-// We export this function so we can import it into server.js and trigger 
-// the connection when the app starts.
 module.exports = connectDB;

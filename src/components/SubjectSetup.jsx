@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './SubjectSetup.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // SUBJECT & TASK SETUP COMPONENT
 // ============================================================================
@@ -31,8 +33,8 @@ function SubjectSetup({ setCurrentPage, token }) {
     const fetchData = async () => {
       try {
         const [subRes, taskRes] = await Promise.all([
-          fetch('http://localhost:5000/api/subjects', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:5000/api/tasks/pending', { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE_URL}/api/subjects`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/tasks/pending`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         
         if (subRes.ok) setSubjects(await subRes.json());
@@ -55,7 +57,7 @@ function SubjectSetup({ setCurrentPage, token }) {
     }
     try {
       const newSubject = { name: subjectName, difficulty, priority: subjectPriority, examDate, dailyStudyHours: Number(studyHours) };
-      const response = await fetch('http://localhost:5000/api/subjects', {
+      const response = await fetch(`${API_BASE_URL}/api/subjects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(newSubject)
@@ -76,7 +78,7 @@ function SubjectSetup({ setCurrentPage, token }) {
 
   const handleDeleteSubject = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/subjects/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/subjects/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -103,7 +105,7 @@ function SubjectSetup({ setCurrentPage, token }) {
         priority: taskPriority,
         subject: selectedSubjectId || null
       };
-      const response = await fetch('http://localhost:5000/api/tasks', {
+      const response = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(newTask)
@@ -124,7 +126,7 @@ function SubjectSetup({ setCurrentPage, token }) {
 
   const handleDeleteTask = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/tasks/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

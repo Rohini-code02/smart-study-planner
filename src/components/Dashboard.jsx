@@ -6,6 +6,8 @@ import React, { useState, useEffect } from 'react';
 // We import our specific CSS file to style the Dashboard component.
 import './Dashboard.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // DASHBOARD COMPONENT
 // ============================================================================
@@ -32,7 +34,7 @@ function Dashboard({ setCurrentPage, token }) {
       try {
         // 1. Fetch User Profile (to get the name)
         // We must include the JWT token in the Authorization header so the server knows who we are!
-        const userRes = await fetch('http://localhost:5000/api/users/me', {
+        const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -42,7 +44,7 @@ function Dashboard({ setCurrentPage, token }) {
         if (userRes.ok) setUserName(userData.name);
 
         // 2. Fetch Progress Stats (for the cards and upcoming exams)
-        const statsRes = await fetch('http://localhost:5000/api/progress/stats', {
+        const statsRes = await fetch(`${API_BASE_URL}/api/progress/stats`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -52,7 +54,7 @@ function Dashboard({ setCurrentPage, token }) {
         if (statsRes.ok) setStats(statsData);
 
         // 3. Fetch Pending Tasks (for the checklist)
-        const tasksRes = await fetch('http://localhost:5000/api/tasks/pending', {
+        const tasksRes = await fetch(`${API_BASE_URL}/api/tasks/pending`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -74,7 +76,7 @@ function Dashboard({ setCurrentPage, token }) {
   // Helper function to handle clicking a task checkbox
   const handleToggleTask = async (taskId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/toggle`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/toggle`, {
         method: 'PATCH', // PATCH is used for partial updates (just toggling one field)
         headers: {
           'Authorization': `Bearer ${token}`
@@ -86,7 +88,7 @@ function Dashboard({ setCurrentPage, token }) {
         
         // Also refresh the stats so the "Tasks Completed" card updates!
         // (In a production app, you might just update the local state manually to save a network request)
-        const statsRes = await fetch('http://localhost:5000/api/progress/stats', {
+        const statsRes = await fetch(`${API_BASE_URL}/api/progress/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const statsData = await statsRes.json();

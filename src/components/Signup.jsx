@@ -6,6 +6,8 @@ import React, { useState } from 'react';
 // We import our specific CSS file to style the Signup component.
 import './Signup.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // SIGNUP COMPONENT
 // ============================================================================
@@ -78,7 +80,7 @@ function Signup({ setCurrentPage, handleSetToken }) {
       // method: 'POST' -> Tells the server we are SENDING new data to be created.
       // headers: { 'Content-Type': 'application/json' } -> Tells the server to expect JSON.
       // body: JSON.stringify(...) -> Converts our JavaScript object into a JSON string.
-      const response = await fetch('http://localhost:5000/api/users/signup', {
+      const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

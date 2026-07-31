@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './MyStudyPlan.css';
 
+import API_BASE_URL from '../config/api.js';
+
 // ============================================================================
 // MY STUDY PLAN COMPONENT
 // ============================================================================
@@ -20,10 +22,10 @@ function MyStudyPlan({ setCurrentPage, token }) {
       try {
         // Fetch all data in parallel for speed
         const [pendingRes, completedRes, statsRes, subjectsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/tasks/pending', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:5000/api/tasks/completed', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:5000/api/progress/stats', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:5000/api/subjects', { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE_URL}/api/tasks/pending`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/tasks/completed`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/progress/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/subjects`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
         if (pendingRes.ok) setTasks(await pendingRes.json());
@@ -46,7 +48,7 @@ function MyStudyPlan({ setCurrentPage, token }) {
   // Handle toggling a task as complete from this page
   const handleToggleTask = async (taskId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/toggle`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/toggle`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` }
       });
