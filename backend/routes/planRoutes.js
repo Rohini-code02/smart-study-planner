@@ -13,7 +13,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { generateStudyPlan, getLatestPlan } = require('../controllers/planController');
+const { generateStudyPlan, getLatestPlan, updateCustomPlan } = require('../controllers/planController');
 const { protect } = require('../middleware/authMiddleware');
 
 // POST /api/plan/generate
@@ -25,5 +25,9 @@ router.post('/generate', protect, generateStudyPlan);
 // GET /api/plan/latest
 // Fetch the most recently saved study plan for the logged-in user
 router.get('/latest', protect, getLatestPlan);
+
+// PUT /api/plan/custom
+// Update the user's latest saved plan with custom changes
+router.put('/custom', protect, updateCustomPlan);
 
 module.exports = router;

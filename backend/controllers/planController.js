@@ -192,4 +192,36 @@ const getLatestPlan = async (req, res) => {
   }
 };
 
-module.exports = { generateStudyPlan, getLatestPlan };
+const updateCustomPlan = async (req, res) => {
+  try {
+    const { timetable } = req.body;
+    
+    if (!timetable || !Array.isArray(timetable)) {
+      return res.status(400).json({ message: 'Invalid custom timetable data provided.' });
+    }
+
+    // Find the user's latest plan
+    const plan = await StudyPlan.findOne({ user: req.user._id }).sort({ createdAt: -1 });
+    if (!plan) {
+      return res.status(404).json({ message: 'No saved plan found to update. Generate a plan first.' });
+    }
+
+    // Extract sessions from the provided timetable array
+    const morningSession = timetable.find(s => s.session === 'Morning Session')?.subjects || [];
+    const afternoonSession = timetable.find(s => s.session === 'Afternoon Session')?.subjects || [];
+    const eveningSession = timetable.find(s => s.session === 'Evening Session')?.subjects || [];
+
+    // Update the DB plan
+    plan.morningSession = morningSession;
+    plan.afternoonSession = afternoonSession;
+    plan.eveningSession = eveningSession;
+    await plan.save();
+
+    res.status(200).json({ message: 'Custom study plan saved successfully!' });
+  } catch (error) {
+    console.error('Error saving custom plan:', error);
+    res.status(500).json({ message: 'Error saving custom study plan' });
+  }
+};
+
+module.exports = { generateStudyPlan, getLatestPlan, updateCustomPlan };

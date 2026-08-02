@@ -11,7 +11,11 @@ function TimetableGenerator({ setCurrentPage, token }) {
   const [availableHours, setAvailableHours] = useState(6);
   const [savedAt, setSavedAt] = useState(null);
 
-  // Fix 4: Auto-load the most recently saved plan when the page mounts
+  // Edit Mode States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableTimetable, setEditableTimetable] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     const loadSavedPlan = async () => {
       try {
@@ -21,11 +25,12 @@ function TimetableGenerator({ setCurrentPage, token }) {
         if (res.ok) {
           const data = await res.json();
           setTimetableData(data.planData);
+          setEditableTimetable(data.planData.timetable);
           setSavedAt(data.planData.generatedAt);
           setIsGenerated(true);
         }
       } catch (err) {
-        // No saved plan — that's fine, just show the generator form
+        // No saved plan
       } finally {
         setIsLoading(false);
       }
@@ -39,7 +44,6 @@ function TimetableGenerator({ setCurrentPage, token }) {
     setError(null);
 
     try {
-      // Fetch subjects from MongoDB
       const subjectsRes = await fetch(`${API_BASE_URL}/api/subjects`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -58,21 +62,19 @@ function TimetableGenerator({ setCurrentPage, token }) {
         return;
       }
 
-      // Also fetch exams to add exam dates to subjects for urgency scoring
       const examsRes = await fetch(`${API_BASE_URL}/api/exams`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const exams = examsRes.ok ? await examsRes.json() : [];
 
-      // Merge: attach the nearest exam date to each subject
       const subjectsWithExams = subjects.map(sub => {
         const linkedExam = exams
           .filter(e => e.subject && e.subject._id === sub._id && new Date(e.date) >= new Date())
           .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
         return {
           ...sub,
-          examDate: linkedExam ? linkedExam.date : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Default 30 days away
-          dailyStudyHours: sub.dailyStudyHours || 2 // Default 2 hours if not set
+          examDate: linkedExam ? linkedExam.date : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          dailyStudyHours: sub.dailyStudyHours || 2
         };
       });
 
@@ -93,6 +95,7 @@ function TimetableGenerator({ setCurrentPage, token }) {
       if (response.ok) {
         const plan = data.planData || data;
         setTimetableData(plan);
+        setEditableTimetable(plan.timetable);
         setSavedAt(plan.generatedAt);
         setIsGenerated(true);
       } else {
@@ -106,6 +109,48 @@ function TimetableGenerator({ setCurrentPage, token }) {
     }
   };
 
+  const handleEditHour = (sessionIndex, subjectIndex, delta) => {
+    const newTimetable = [...editableTimetable];
+    const session = { ...newTimetable[sessionIndex] };
+    const subjects = [...session.subjects];
+    const subject = { ...subjects[subjectIndex] };
+    
+    subject.hoursAllocated = Math.max(0, subject.hoursAllocated + delta);
+    
+    subjects[subjectIndex] = subject;
+    session.subjects = subjects;
+    newTimetable[sessionIndex] = session;
+    
+    setEditableTimetable(newTimetable);
+  };
+
+  const handleSaveCustomPlan = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/plan/custom`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ timetable: editableTimetable })
+      });
+      
+      if (res.ok) {
+        const updatedData = { ...timetableData, timetable: editableTimetable };
+        setTimetableData(updatedData);
+        setIsEditing(false);
+      } else {
+        alert('Failed to save custom plan.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error saving custom plan.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="timetable-container">
@@ -115,6 +160,8 @@ function TimetableGenerator({ setCurrentPage, token }) {
       </div>
     );
   }
+
+  const currentTimetable = isEditing ? editableTimetable : (timetableData ? timetableData.timetable : []);
 
   return (
     <div className="timetable-container">
@@ -148,31 +195,38 @@ function TimetableGenerator({ setCurrentPage, token }) {
             <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>
               {isGenerating ? '✨ Generating your plan...' : '✨ Generate Study Plan'}
             </button>
-            <p className="generate-hint">
-              We will fetch your subjects and exams, rank them by urgency, and build an optimized daily routine.
-            </p>
           </div>
 
         ) : (
 
           <div className="timetable-results">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
               <h3>Your Optimized Daily Plan 🗓️</h3>
-              {savedAt && (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', background: '#f1f5f9', padding: '4px 10px', borderRadius: '20px' }}>
-                  ✅ Saved {new Date(savedAt).toLocaleDateString('en-IN')}
-                </span>
-              )}
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                {savedAt && !isEditing && (
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', background: '#f1f5f9', padding: '4px 10px', borderRadius: '20px' }}>
+                    ✅ Saved {new Date(savedAt).toLocaleDateString('en-IN')}
+                  </span>
+                )}
+                {!isEditing ? (
+                  <button className="btn-edit-plan" onClick={() => setIsEditing(true)}>
+                    ✏️ Edit Plan
+                  </button>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn-cancel-edit" onClick={() => { setEditableTimetable(timetableData.timetable); setIsEditing(false); }}>
+                      Cancel
+                    </button>
+                    <button className="btn-save-edit" onClick={handleSaveCustomPlan} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : '💾 Save Custom Plan'}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {timetableData && timetableData.tip && (
-              <div style={{ backgroundColor: '#e0f2fe', padding: '15px', borderRadius: '8px', marginBottom: '20px', color: '#0369a1' }}>
-                <strong>💡 Smart Tip:</strong> {timetableData.tip}
-              </div>
-            )}
-
-            {timetableData && timetableData.timetable && timetableData.timetable.map((sessionData, index) => (
-              <div key={index} className={`session-card ${sessionData.session.toLowerCase().split(' ')[0]}`}>
+            {currentTimetable && currentTimetable.map((sessionData, sessionIndex) => (
+              <div key={sessionIndex} className={`session-card ${sessionData.session.toLowerCase().split(' ')[0]}`}>
                 <h4>
                   {sessionData.session === 'Morning Session' ? '🌅' :
                    sessionData.session === 'Afternoon Session' ? '☀️' : '🌙'}
@@ -180,13 +234,21 @@ function TimetableGenerator({ setCurrentPage, token }) {
                 </h4>
                 <ul className="session-tasks">
                   {sessionData.subjects && sessionData.subjects.length > 0 ? (
-                    sessionData.subjects.map((sub, idx) => (
-                      <li key={idx}>
-                        <strong>📖 {sub.subjectName}</strong> — {sub.hoursAllocated} hrs
-                        &nbsp;| Priority: <strong>{sub.priority}</strong>
-                        &nbsp;| Difficulty: <strong>{sub.difficulty}</strong>
-                        {sub.daysUntilExam !== undefined && (
-                          <>&nbsp;| Exam in: <strong>{sub.daysUntilExam} days</strong></>
+                    sessionData.subjects.map((sub, subjectIndex) => (
+                      <li key={subjectIndex} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <strong>📖 {sub.subjectName}</strong> 
+                          {!isEditing && <span> — {sub.hoursAllocated} hrs</span>}
+                          &nbsp;| Priority: <strong>{sub.priority}</strong>
+                          &nbsp;| Difficulty: <strong>{sub.difficulty}</strong>
+                        </div>
+                        
+                        {isEditing && (
+                          <div className="edit-controls">
+                            <button onClick={() => handleEditHour(sessionIndex, subjectIndex, -0.5)} disabled={sub.hoursAllocated <= 0}>-</button>
+                            <span className="hour-display">{sub.hoursAllocated} hrs</span>
+                            <button onClick={() => handleEditHour(sessionIndex, subjectIndex, 0.5)}>+</button>
+                          </div>
                         )}
                       </li>
                     ))
@@ -197,14 +259,16 @@ function TimetableGenerator({ setCurrentPage, token }) {
               </div>
             ))}
 
-            <div style={{ marginTop: '25px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <button className="btn-generate" onClick={() => { setIsGenerated(false); setTimetableData(null); }}>
-                🔄 Generate New Plan
-              </button>
-              <button className="btn-back-dashboard" onClick={() => setCurrentPage('dashboard')}>
-                ← Back to Dashboard
-              </button>
-            </div>
+            {!isEditing && (
+              <div style={{ marginTop: '25px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button className="btn-generate" onClick={() => { setIsGenerated(false); setTimetableData(null); }}>
+                  🔄 Generate New Plan
+                </button>
+                <button className="btn-back-dashboard" onClick={() => setCurrentPage('dashboard')}>
+                  ← Back to Dashboard
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

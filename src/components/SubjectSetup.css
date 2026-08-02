@@ -1,151 +1,178 @@
 /* ==========================================================================
-   SUBJECT SETUP PAGE CSS
+   SUBJECT SETUP PAGE CSS (Glassmorphism)
    ========================================================================== */
 
-/* 
-  Why this CSS section is created (.setup-container):
-  This is the main wrapper for the whole page. We use display: flex and 
-  min-height: 100vh to vertically and horizontally center the setup form 
-  perfectly in the middle of the screen.
-*/
 .setup-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background-color: var(--bg-tertiary);
+  min-height: calc(100vh - 80px);
   padding: 2rem;
 }
 
-/* 
-  Why this CSS section is created (.setup-box):
-  This is the actual white card that contains our form fields.
-  It gives the form boundaries, a white background, rounded corners, 
-  and a shadow so it stands out clearly from the grey background.
-*/
 .setup-box {
-  background-color: var(--bg-secondary); transition: background-color 0.3s ease;
-  padding: 2.5rem 2.5rem;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  padding: 3rem;
+  border-radius: var(--border-radius);
   width: 100%;
-  max-width: 500px;
+  max-width: 550px;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 
-  Why this CSS section is created (.setup-box h2):
-  Styles the main title of the form to be large and blue, matching our brand identity.
-*/
 .setup-box h2 {
   color: var(--accent-primary);
   margin-bottom: 0.5rem;
-  font-size: 1.8rem;
+  font-size: 2rem;
+  font-weight: 700;
   text-align: center;
 }
 
-/* 
-  Why this CSS section is created (.setup-subtitle):
-  Provides a small description text under the title. We center it and make it grey 
-  so it is legible but not overwhelming.
-*/
 .setup-subtitle {
   color: var(--text-secondary);
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   text-align: center;
+  font-size: 1.1rem;
 }
 
-/* 
-  Why this CSS section is created (.setup-form):
-  Uses flexbox column layout to beautifully stack all the input groups vertically 
-  with consistent spacing (gap) between them.
-*/
 .setup-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-/* 
-  Why this CSS section is created (.input-group select):
-  In previous pages we styled "input" tags, but here we also use "select" dropdowns.
-  We want the dropdowns to look exactly identical to the text inputs, so they get 
-  the same padding, borders, and border-radius.
-*/
-.input-group select {
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  font-size: 1rem;
-  background-color: var(--bg-secondary); transition: background-color 0.3s ease; /* Ensures the dropdown background is clean white */
-  transition: border-color 0.3s;
-  cursor: pointer;
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-/* Change the border to blue when the user clicks the dropdown to make a choice */
-.input-group select:focus {
+.input-group label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  padding: 1rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0.4);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+[data-theme='dark'] .input-group input,
+[data-theme='dark'] .input-group select,
+[data-theme='dark'] .input-group textarea {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #fff;
+}
+
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
   border-color: var(--accent-primary);
+  background-color: var(--glass-bg);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   outline: none;
 }
 
-/* 
-  Why this CSS section is created (.setup-buttons):
-  Uses flexbox to place the Cancel and Save buttons side-by-side on the same row.
-  justify-content: space-between pushes them to opposite ends of the form.
-*/
 .setup-buttons {
   display: flex;
   justify-content: space-between;
-  margin-top: 1rem;
+  margin-top: 2rem;
   gap: 1rem;
 }
 
-/* 
-  Why this CSS section is created (.btn-cancel):
-  The cancel button should not be as prominent as the save button.
-  We give it a transparent background and a grey border so it looks like a secondary action.
-*/
 .btn-cancel {
-  flex: 1; /* Makes the button take up equal space with the other button */
+  flex: 1;
   background-color: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  padding: 0.85rem;
-  border-radius: 5px;
-  font-size: 1.05rem;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
+  border: 1px solid var(--text-muted);
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
 }
 
-/* Slightly darken the cancel button background when hovered */
 .btn-cancel:hover {
-  background-color: var(--bg-tertiary);
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: var(--text-primary);
 }
 
-/* 
-  Why this CSS section is created (.btn-save):
-  The save button is the most important action on the page.
-  We give it a solid blue background so the user's eye is immediately drawn to it.
-*/
 .btn-save {
-  flex: 1; /* Makes the button take up equal space alongside Cancel */
+  flex: 1;
   background-color: var(--accent-primary);
   color: white;
   border: none;
-  padding: 0.85rem;
-  border-radius: 5px;
-  font-size: 1.05rem;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s, transform 0.1s;
+  padding: 1rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
 }
 
-/* Darken the save button when hovered */
 .btn-save:hover {
   background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
-/* Shrink the button slightly when physically clicked for realism */
 .btn-save:active {
-  transform: scale(0.97);
+  transform: translateY(0);
+}
+
+/* LIST VIEWS (Subjects, Exams, Tasks List) */
+.list-container {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  margin-top: 2rem;
+}
+
+.list-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.list-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+}
+
+.list-card h3 {
+  color: var(--accent-primary);
+  margin-bottom: 0.5rem;
+}
+
+.list-card p {
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.btn-delete {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.btn-delete:hover {
+  background-color: #ef4444;
+  color: white;
 }
