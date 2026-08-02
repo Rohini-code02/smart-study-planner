@@ -215,21 +215,9 @@ const buildSession = (sessionName, startTime, availableHours, subjectQueue, adju
 // This is the single API endpoint the React frontend calls to get a full 
 // generated timetable. It orchestrates all the helper functions above to 
 // produce a structured, ranked, session-based daily study plan.
-//
-// Expected request body from React:
-// {
-//   "subjects": [
-//     { "name": "Calculus", "priority": "High", "difficulty": "Hard", "examDate": "2026-08-10", "dailyStudyHours": 2 },
-//     { "name": "English", "priority": "Low", "difficulty": "Easy", "examDate": "2026-09-01", "dailyStudyHours": 1 }
-//   ],
-//   "availableDailyHours": 8
-// }
 const generateStudyPlan = async (req, res) => {
   const { subjects, availableDailyHours } = req.body;
 
-  // -------------------------------------------------------------------------
-  // STEP 1: Input Validation
-  // -------------------------------------------------------------------------
   if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
     return res.status(400).json({ message: 'Please provide at least one subject.' });
   }
@@ -238,18 +226,10 @@ const generateStudyPlan = async (req, res) => {
     return res.status(400).json({ message: 'Please provide your available daily study hours (minimum 1).' });
   }
 
-  // -------------------------------------------------------------------------
-  // STAGE 1 & 2: SCORE AND RANK SUBJECTS (Sort by urgency, highest first)
-  // -------------------------------------------------------------------------
-  // We calculate a score for each subject and sort descending (highest = most urgent)
   const rankedSubjects = [...subjects].sort((a, b) => {
     return calculateUrgencyScore(b) - calculateUrgencyScore(a);
   });
 
-  // -------------------------------------------------------------------------
-  // Build a map of subject → adjusted daily hours (accounting for difficulty)
-  // e.g., A 'Hard' subject that requests 2 hrs/day actually gets 2 × 1.5 = 3 hrs
-  // -------------------------------------------------------------------------
   const adjustedHoursMap = {};
   rankedSubjects.forEach((subject) => {
     const multiplier = getDifficultyMultiplier(subject.difficulty);
@@ -258,19 +238,11 @@ const generateStudyPlan = async (req, res) => {
     adjustedHoursMap[subject._id || subject.name] = parseFloat(adjusted.toFixed(1));
   });
 
-  // -------------------------------------------------------------------------
-  // STAGE 3: SPLIT DAILY HOURS INTO MORNING / AFTERNOON / EVENING
-  // -------------------------------------------------------------------------
   const sessions = splitIntoSessions(availableDailyHours);
 
-  // We pass a COPY of the ranked subjects array so the original isn't mutated
-  // Each buildSession call will consume from this shared queue
   const subjectQueue = [...rankedSubjects];
   const hoursMapCopy = { ...adjustedHoursMap };
 
-  // -------------------------------------------------------------------------
-  // STAGE 4: ASSIGN SUBJECTS TO EACH SESSION
-  // -------------------------------------------------------------------------
   const morningSession = buildSession(
     'Morning Session',
     '8:00 AM - 12:00 PM',
@@ -295,15 +267,11 @@ const generateStudyPlan = async (req, res) => {
     hoursMapCopy
   );
 
-  // -------------------------------------------------------------------------
-  // BUILD THE FINAL RESPONSE OBJECT
-  // -------------------------------------------------------------------------
   const planData = {
     generatedAt: new Date().toISOString(),
     totalDailyHours: availableDailyHours,
     subjectCount: subjects.length,
 
-    // The ranked list shows the user WHY subjects are ordered this way
     subjectRanking: rankedSubjects.map((s, index) => ({
       rank: index + 1,
       name: s.name,
@@ -313,34 +281,24 @@ const generateStudyPlan = async (req, res) => {
       difficulty: s.difficulty,
     })),
 
-    // The three session blocks with assigned subject slots
     timetable: [morningSession, afternoonSession, eveningSession],
 
-    // A helpful tip for the student based on the most urgent subject
     tip: `Focus on ${rankedSubjects[0].name} first — it has the highest urgency score!`,
   };
 
   try {
-    // =========================================================================
-    // CONNECTING TO MONGODB: SAVE THE STUDY PLAN
-    // =========================================================================
-    // Here we use our StudyPlan model to actually SAVE the generated data 
-    // into the MongoDB database so it isn't lost when the user closes the app!
-    // We attach 'user: req.user._id' to prove this logged-in user owns this plan.
     const savedPlan = await StudyPlan.create({
-      user: req.user._id, // Set by our auth middleware
+      user: req.user._id,
       date: new Date(),
       totalHours: availableDailyHours,
-      morningSession: morningSession.subjects, // Save the array of subjects
+      morningSession: morningSession.subjects,
       afternoonSession: afternoonSession.subjects,
       eveningSession: eveningSession.subjects,
     });
 
-    // Send the generated plan (along with its new MongoDB _id) back to React
     res.status(200).json({ planData, savedPlanId: savedPlan._id });
   } catch (dbError) {
     console.error("Database error while saving study plan:", dbError);
-    // Even if saving fails, we can still send the planData to the user so the app works
     res.status(200).json({ planData, error: "Plan generated but could not be saved to DB" });
   }
 };
@@ -349,15 +307,12 @@ const generateStudyPlan = async (req, res) => {
 // CONTROLLER 2: getLatestPlan
 // ============================================================================
 // Fetches the most recently generated study plan for the logged-in user.
-// This is used when the user navigates to the Study Plan page to restore
-// their previously generated plan instead of starting from scratch.
 const getLatestPlan = async (req, res) => {
   try {
     const plan = await StudyPlan.findOne({ user: req.user._id }).sort({ createdAt: -1 });
     if (!plan) {
       return res.status(404).json({ message: 'No saved plan found' });
     }
-    // Reconstruct planData format that the frontend expects
     const planData = {
       generatedAt: plan.createdAt,
       totalDailyHours: plan.totalHours,
