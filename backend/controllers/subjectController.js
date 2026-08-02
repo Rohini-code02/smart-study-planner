@@ -26,32 +26,24 @@ const Subject = require('../models/Subject');
 // Because this is a PROTECTED route, req.user is already attached by our 
 // authMiddleware — so we know exactly WHO is creating the subject.
 const createSubject = async (req, res) => {
-  // Extract the form data sent from the React frontend
-  const { name, difficulty, priority, examDate, dailyStudyHours } = req.body;
+  const { name, difficulty, priority } = req.body;
 
-  // INPUT VALIDATION: Ensure all required fields were actually sent
-  if (!name || !examDate || !dailyStudyHours) {
-    return res.status(400).json({ message: 'Please provide name, exam date, and daily study hours' });
+  // Only name is required — difficulty and priority have defaults
+  if (!name) {
+    return res.status(400).json({ message: 'Please provide a subject name' });
   }
 
   try {
-    // Create and save the new subject in MongoDB.
-    // We ALWAYS attach 'user: req.user._id' so the subject is linked to the 
-    // currently logged-in user. This prevents data from being mixed between users!
     const subject = await Subject.create({
-      user: req.user._id,    // Links this subject to the logged-in user
+      user: req.user._id,
       name,
-      difficulty,
-      priority,
-      examDate,
-      dailyStudyHours,
+      difficulty: difficulty || 'Medium',
+      priority: priority || 'Normal',
     });
 
-    // Send back a 201 "Created" status along with the newly saved subject data
     res.status(201).json(subject);
 
   } catch (error) {
-    // If validation fails (e.g., invalid difficulty value), Mongoose throws an error
     console.error(error);
     res.status(500).json({ message: error.message || 'Server error while creating subject' });
   }

@@ -190,7 +190,7 @@ function Tasks({ token }) {
           </div>
           <div className="input-group">
             <label>Due Date *</label>
-            <input type="date" value={taskDueDate} onChange={e => setTaskDueDate(e.target.value)} />
+            <input type="date" value={taskDueDate} min={today} onChange={e => setTaskDueDate(e.target.value)} />
           </div>
           <div className="input-group">
             <label>Priority</label>
