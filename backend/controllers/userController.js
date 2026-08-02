@@ -9,6 +9,9 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ============================================================================
 // HELPER FUNCTION: generateToken
@@ -274,11 +277,61 @@ const changeUserPassword = async (req, res) => {
   }
 };
 
+// ============================================================================
+// CONTROLLER 6: googleAuthUser
+// ============================================================================
+// Handles Google Sign-In. Verifies the Google credential token, then either
+// creates a new user (first-time sign in) or returns existing user's JWT.
+const googleAuthUser = async (req, res) => {
+  const { credential } = req.body;
+  if (!credential) {
+    return res.status(400).json({ message: 'No Google credential provided' });
+  }
+  try {
+    // Verify the token with Google
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+    if (!user) {
+      // New user — create account
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatarUrl: picture || '',
+        password: undefined, // Google users don't have a password
+      });
+    } else if (!user.googleId) {
+      // Existing email user — link Google account
+      user.googleId = googleId;
+      if (!user.avatarUrl) user.avatarUrl = picture || '';
+      await user.save();
+    }
+
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(401).json({ message: 'Google authentication failed' });
+  }
+};
+
 // Export all controllers so our routes file can use them
 module.exports = { 
   signupUser, 
   loginUser, 
   getUserProfile, 
   updateUserProfile, 
-  changeUserPassword 
+  changeUserPassword,
+  googleAuthUser,
 };

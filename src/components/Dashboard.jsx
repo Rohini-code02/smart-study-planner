@@ -232,10 +232,10 @@ function Dashboard({ setCurrentPage, token }) {
       <section className="dashboard-quick-actions">
         <h3>⚡ Quick Actions</h3>
         <div className="actions-buttons">
-          {/* Clicking this button navigates the user to our new Subject Setup page */}
-          <button className="btn-action" onClick={() => setCurrentPage('setup')}>+ Add Subject</button>
-          <button className="btn-action" onClick={() => setCurrentPage('timetable')}>✨ Generate Timetable</button>
-          <button className="btn-action">+ Add Exam</button>
+          <button className="btn-action" onClick={() => setCurrentPage('subjects')}>📚 Manage Subjects</button>
+          <button className="btn-action" onClick={() => setCurrentPage('exams')}>📅 Manage Exams</button>
+          <button className="btn-action" onClick={() => setCurrentPage('tasks')}>✅ Manage Tasks</button>
+          <button className="btn-action" onClick={() => setCurrentPage('timetable')}>✨ Generate Study Plan</button>
         </div>
       </section>
 

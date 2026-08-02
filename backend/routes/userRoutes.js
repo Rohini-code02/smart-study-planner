@@ -18,7 +18,8 @@ const {
   loginUser,
   getUserProfile,
   updateUserProfile,
-  changeUserPassword
+  changeUserPassword,
+  googleAuthUser
 } = require('../controllers/userController');
 
 // Import the protect middleware for the private "me" route
@@ -41,6 +42,10 @@ router.post('/signup', signupUser);
 // Why this route exists:
 // This is the endpoint our React Login page calls when a user submits their credentials.
 router.post('/login', loginUser);
+
+// POST /api/users/google
+// Google OAuth sign-in / sign-up
+router.post('/google', googleAuthUser);
 
 // PRIVATE ROUTES (Only logged-in users with a valid JWT can access)
 // -----------------------------------------------------------------------

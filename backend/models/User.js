@@ -55,10 +55,24 @@ const userSchema = new mongoose.Schema(
     // We define this as a String, but we NEVER store the user's real, plain-text 
     // password here. Instead, before this is saved to the database, our 'userController.js' 
     // uses 'bcrypt' to hash (scramble) the password into a long, unreadable string.
+    // We never store plain-text passwords. For Google OAuth users, password may be null.
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      required: false,
       minlength: [6, 'Password must be at least 6 characters long'],
+    },
+
+    // Google OAuth ID — stored when user signs in with Google
+    googleId: {
+      type: String,
+      required: false,
+    },
+
+    // Profile avatar — either a predefined avatar key or a base64 image URL
+    avatarUrl: {
+      type: String,
+      required: false,
+      default: '',
     },
   },
   {

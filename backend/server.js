@@ -72,6 +72,9 @@ const subjectRoutes = require('./routes/subjectRoutes');
 // Import our task management routes
 const taskRoutes = require('./routes/taskRoutes');
 
+// Import our exam management routes
+const examRoutes = require('./routes/examRoutes');
+
 // Import our study plan generation routes
 const planRoutes = require('./routes/planRoutes');
 
@@ -98,6 +101,9 @@ app.use('/api/subjects', subjectRoutes);
 // All routes inside taskRoutes.js will be prefixed with /api/tasks
 // For example: POST /api/tasks, GET /api/tasks/pending, PATCH /api/tasks/:id/toggle
 app.use('/api/tasks', taskRoutes);
+
+// Mount the exam routes at /api/exams
+app.use('/api/exams', examRoutes);
 
 // Mount the study plan generation routes at /api/plan
 // For example: POST /api/plan/generate

@@ -77,18 +77,7 @@ const subjectSchema = new mongoose.Schema(
     },
 
     // ========================================================================
-    // FIELD 5: examDate
-    // ========================================================================
-    // Why it exists: Stores the deadline for this subject.
-    // - type: Date tells Mongoose to treat this as a real Date object, allowing 
-    //   us to do math on it later (e.g., "How many days until the exam?").
-    examDate: {
-      type: Date,
-      required: [true, 'Please provide an exam date'],
-    },
-
-    // ========================================================================
-    // FIELD 6: dailyStudyHours
+    // FIELD 5: dailyStudyHours
     // ========================================================================
     // Why it exists: Defines how many hours per day the student wants to dedicate.
     // - type: Number ensures they can't type "two hours" (it must be 2).
