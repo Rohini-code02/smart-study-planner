@@ -4,6 +4,7 @@ import API_BASE_URL from '../config/api.js';
 
 function Subjects({ setCurrentPage, token }) {
   const [subjectName, setSubjectName] = useState('');
+  const [difficulty, setDifficulty] = useState('Medium');
   const [subjects, setSubjects] = useState([]);
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -28,7 +29,7 @@ function Subjects({ setCurrentPage, token }) {
       setMessage('Please enter a subject name.');
       return;
     }
-    const payload = { name: subjectName };
+    const payload = { name: subjectName, difficulty };
     try {
       let res, data;
       if (editingId) {
@@ -62,6 +63,7 @@ function Subjects({ setCurrentPage, token }) {
         }
       }
       setSubjectName('');
+      setDifficulty('Medium');
     } catch (err) {
       setMessage('Could not connect to server.');
     }
@@ -70,6 +72,7 @@ function Subjects({ setCurrentPage, token }) {
   const handleEdit = (sub) => {
     setEditingId(sub._id);
     setSubjectName(sub.name);
+    setDifficulty(sub.difficulty || 'Medium');
     setMessage('');
   };
 
@@ -91,6 +94,7 @@ function Subjects({ setCurrentPage, token }) {
   const handleCancel = () => {
     setEditingId(null);
     setSubjectName('');
+    setDifficulty('Medium');
     setMessage('');
   };
 
@@ -119,6 +123,14 @@ function Subjects({ setCurrentPage, token }) {
               onChange={e => setSubjectName(e.target.value)}
             />
           </div>
+          <div className="input-group">
+            <label>Difficulty Level</label>
+            <select value={difficulty} onChange={e => setDifficulty(e.target.value)}>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button type="submit" className="btn-save">
               {editingId ? 'Update Subject' : 'Add Subject'}
@@ -145,6 +157,14 @@ function Subjects({ setCurrentPage, token }) {
                 }}>
                   <div>
                     <strong>{sub.name}</strong>
+                    <span style={{
+                      marginLeft: '10px', fontSize: '0.8rem', padding: '2px 8px',
+                      borderRadius: '12px',
+                      background: sub.difficulty === 'Hard' ? '#fee2e2' : sub.difficulty === 'Easy' ? '#dcfce7' : '#fef3c7',
+                      color: sub.difficulty === 'Hard' ? '#dc2626' : sub.difficulty === 'Easy' ? '#16a34a' : '#d97706'
+                    }}>
+                      {sub.difficulty || 'Medium'}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button onClick={() => handleEdit(sub)} style={{
