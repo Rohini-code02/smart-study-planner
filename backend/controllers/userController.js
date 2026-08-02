@@ -283,17 +283,21 @@ const changeUserPassword = async (req, res) => {
 // Handles Google Sign-In. Verifies the Google credential token, then either
 // creates a new user (first-time sign in) or returns existing user's JWT.
 const googleAuthUser = async (req, res) => {
-  const { credential } = req.body;
+  const { credential } = req.body; // credential will now be the access_token
   if (!credential) {
     return res.status(400).json({ message: 'No Google credential provided' });
   }
   try {
-    // Verify the token with Google
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    // Fetch user info from Google using the access_token
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${credential}` }
     });
-    const payload = ticket.getPayload();
+
+    if (!response.ok) {
+      throw new Error('Failed to verify Google access token');
+    }
+
+    const payload = await response.json();
     const { sub: googleId, email, name, picture } = payload;
 
     // Check if user exists

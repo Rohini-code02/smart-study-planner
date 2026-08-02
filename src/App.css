@@ -357,3 +357,50 @@ button:active {
     align-items: center;
   }
 }
+
+/* ==========================================================================
+   8. CUSTOM GOOGLE BUTTON CSS
+   ========================================================================== */
+.custom-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 24px;
+  background-color: white;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  font-family: "Outfit", sans-serif;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+}
+
+[data-theme='dark'] .custom-google-btn {
+  background-color: #202124;
+  color: #e8eaed;
+  border-color: #5f6368;
+}
+
+.custom-google-btn:hover {
+  background-color: #f8f9fa;
+  box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+}
+
+[data-theme='dark'] .custom-google-btn:hover {
+  background-color: #303134;
+}
+
+.custom-google-btn:active {
+  background-color: #e8eaed;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+}
+
+.google-icon {
+  width: 22px;
+  height: 22px;
+}
