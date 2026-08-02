@@ -63,7 +63,7 @@ function App() {
         {currentPage === 'subjects' && <Subjects setCurrentPage={setCurrentPage} token={token} />}
         {currentPage === 'exams' && <Exams setCurrentPage={setCurrentPage} token={token} />}
         {currentPage === 'tasks' && <Tasks setCurrentPage={setCurrentPage} token={token} />}
-        {currentPage === 'setup' && <SubjectSetup setCurrentPage={setCurrentPage} token={token} />}
+        {currentPage === 'setup' && <Subjects setCurrentPage={setCurrentPage} token={token} />}
         {currentPage === 'timetable' && <TimetableGenerator setCurrentPage={setCurrentPage} token={token} />}
         {currentPage === 'plan' && <MyStudyPlan setCurrentPage={setCurrentPage} token={token} />}
         {currentPage === 'progress' && <ProgressDashboard token={token} />}

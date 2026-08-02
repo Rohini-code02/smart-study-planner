@@ -174,10 +174,10 @@ function MyStudyPlan({ setCurrentPage, token }) {
       {/* Quick action to go add tasks */}
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <button
-          onClick={() => setCurrentPage('setup')}
+          onClick={() => setCurrentPage('subjects')}
           style={{ padding: '10px 25px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
         >
-          + Add Subjects / Tasks
+          + Manage Subjects
         </button>
       </div>
 
