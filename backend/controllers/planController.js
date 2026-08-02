@@ -345,4 +345,36 @@ const generateStudyPlan = async (req, res) => {
   }
 };
 
-module.exports = { generateStudyPlan };
+// ============================================================================
+// CONTROLLER 2: getLatestPlan
+// ============================================================================
+// Fetches the most recently generated study plan for the logged-in user.
+// This is used when the user navigates to the Study Plan page to restore
+// their previously generated plan instead of starting from scratch.
+const getLatestPlan = async (req, res) => {
+  try {
+    const plan = await StudyPlan.findOne({ user: req.user._id }).sort({ createdAt: -1 });
+    if (!plan) {
+      return res.status(404).json({ message: 'No saved plan found' });
+    }
+    // Reconstruct planData format that the frontend expects
+    const planData = {
+      generatedAt: plan.createdAt,
+      totalDailyHours: plan.totalHours,
+      timetable: [
+        { session: 'Morning Session', startTime: '8:00 AM - 12:00 PM', totalHours: 0, subjects: plan.morningSession },
+        { session: 'Afternoon Session', startTime: '1:00 PM - 5:00 PM', totalHours: 0, subjects: plan.afternoonSession },
+        { session: 'Evening Session', startTime: '7:00 PM - 9:00 PM', totalHours: 0, subjects: plan.eveningSession },
+      ],
+      tip: plan.morningSession && plan.morningSession.length > 0
+        ? `Continue focusing on ${plan.morningSession[0].subjectName}!`
+        : 'Keep studying consistently!',
+    };
+    res.status(200).json({ planData, savedPlanId: plan._id });
+  } catch (error) {
+    console.error('Error fetching latest plan:', error);
+    res.status(500).json({ message: 'Error fetching saved plan' });
+  }
+};
+
+module.exports = { generateStudyPlan, getLatestPlan };

@@ -84,8 +84,9 @@ const subjectSchema = new mongoose.Schema(
     // - min and max enforce realistic constraints (e.g., you can't study 25 hours a day).
     dailyStudyHours: {
       type: Number,
-      required: [true, 'Please provide daily study hours'],
-      min: [0.5, 'Daily study hours must be at least 0.5'],
+      required: false,
+      default: 0,
+      min: [0, 'Daily study hours cannot be negative'],
       max: [12, 'Daily study hours cannot exceed 12'],
     },
   },

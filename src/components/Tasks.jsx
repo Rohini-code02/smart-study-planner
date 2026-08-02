@@ -11,19 +11,22 @@ function Tasks({ token }) {
   const [tasks, setTasks] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [message, setMessage] = useState('');
-  const [filter, setFilter] = useState('pending'); // 'pending' | 'completed' | 'all'
+  const [filter, setFilter] = useState('pending');
   const [editingId, setEditingId] = useState(null);
+
+  const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [taskRes, subjectRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/tasks`, { headers: { 'Authorization': `Bearer ${token}` } }).catch(() =>
-            fetch(`${API_BASE_URL}/api/tasks/pending`, { headers: { 'Authorization': `Bearer ${token}` } })
-          ),
+        const [pendingRes, completedRes, subjectRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/tasks/pending`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/tasks/completed`, { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch(`${API_BASE_URL}/api/subjects`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        if (taskRes.ok) setTasks(await taskRes.json());
+        const pendingTasks = pendingRes.ok ? await pendingRes.json() : [];
+        const completedTasks = completedRes.ok ? await completedRes.json() : [];
+        setTasks([...pendingTasks, ...completedTasks]);
         if (subjectRes.ok) setSubjects(await subjectRes.json());
       } catch (err) {
         console.error('Error fetching task data:', err);
@@ -38,8 +41,13 @@ function Tasks({ token }) {
       setMessage('Please provide a title and due date.');
       return;
     }
-
-    const payload = { title: taskTitle, description: taskDesc, dueDate: taskDueDate, priority: taskPriority, subject: selectedSubjectId || null };
+    const payload = {
+      title: taskTitle,
+      description: taskDesc,
+      dueDate: taskDueDate,
+      priority: taskPriority,
+      subject: selectedSubjectId || null
+    };
     try {
       let res, data;
       if (editingId) {
@@ -53,6 +61,9 @@ function Tasks({ token }) {
           setTasks(tasks.map(t => t._id === editingId ? data : t));
           setMessage('Task updated!');
           setEditingId(null);
+        } else {
+          setMessage(data.message || 'Failed to update task.');
+          return;
         }
       } else {
         res = await fetch(`${API_BASE_URL}/api/tasks`, {
@@ -64,10 +75,13 @@ function Tasks({ token }) {
         if (res.ok) {
           setTasks([...tasks, data]);
           setMessage('Task added successfully!');
+        } else {
+          setMessage(data.message || 'Failed to add task.');
+          return;
         }
       }
-      if (!res.ok) setMessage(data.message || 'Failed to save task.');
-      else { setTaskTitle(''); setTaskDesc(''); setTaskDueDate(''); setTaskPriority('Medium'); setSelectedSubjectId(''); }
+      setTaskTitle(''); setTaskDesc(''); setTaskDueDate('');
+      setTaskPriority('Medium'); setSelectedSubjectId('');
     } catch (err) {
       setMessage('Could not connect to server.');
     }
@@ -93,6 +107,7 @@ function Tasks({ token }) {
     setTaskDueDate(task.dueDate ? task.dueDate.split('T')[0] : '');
     setTaskPriority(task.priority);
     setSelectedSubjectId(task.subject?._id || '');
+    setMessage('');
   };
 
   const handleDelete = async (id) => {
@@ -112,18 +127,42 @@ function Tasks({ token }) {
 
   const handleCancel = () => {
     setEditingId(null);
-    setTaskTitle(''); setTaskDesc(''); setTaskDueDate(''); setTaskPriority('Medium'); setSelectedSubjectId('');
+    setTaskTitle(''); setTaskDesc(''); setTaskDueDate('');
+    setTaskPriority('Medium'); setSelectedSubjectId('');
     setMessage('');
   };
 
+  // Fix 3: Filter tasks properly - pending shows only today+future due dates, completed shows recent
   const filteredTasks = tasks.filter(t => {
     if (filter === 'pending') return !t.isCompleted;
     if (filter === 'completed') return t.isCompleted;
     return true;
+  }).sort((a, b) => {
+    // Sort by due date ascending for pending, descending (newest) for completed
+    if (filter === 'completed') return new Date(b.completedAt || b.updatedAt) - new Date(a.completedAt || a.updatedAt);
+    return new Date(a.dueDate) - new Date(b.dueDate);
   });
 
   const priorityColor = (p) => p === 'High' ? '#dc2626' : p === 'Medium' ? '#d97706' : '#16a34a';
   const priorityBg = (p) => p === 'High' ? '#fee2e2' : p === 'Medium' ? '#fef3c7' : '#dcfce7';
+
+  const getDueDateColor = (dueDate, isCompleted) => {
+    if (isCompleted) return '#94a3b8';
+    const diff = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return '#dc2626'; // overdue
+    if (diff === 0) return '#d97706'; // today
+    if (diff <= 3) return '#f59e0b'; // soon
+    return '#64748b';
+  };
+
+  const getDueDateLabel = (dueDate, isCompleted) => {
+    if (isCompleted) return '';
+    const diff = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return ` (${Math.abs(diff)}d overdue)`;
+    if (diff === 0) return ' (Due Today!)';
+    if (diff <= 3) return ` (${diff}d left)`;
+    return '';
+  };
 
   return (
     <div className="setup-container">
@@ -132,7 +171,10 @@ function Tasks({ token }) {
         <p className="setup-subtitle">Create and manage your personal study tasks.</p>
 
         {message && (
-          <p style={{ color: message.includes('success') || message.includes('added') || message.includes('updated') ? 'green' : 'red', marginBottom: '12px', fontWeight: 500 }}>
+          <p style={{
+            color: message.includes('success') || message.includes('added') || message.includes('updated') ? 'green' : '#64748b',
+            marginBottom: '12px', fontWeight: 500
+          }}>
             {message}
           </p>
         )}
@@ -166,7 +208,9 @@ function Tasks({ token }) {
             </select>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="submit" className="btn-save" style={{ background: '#8b5cf6' }}>{editingId ? 'Update Task' : 'Add Task'}</button>
+            <button type="submit" className="btn-save" style={{ background: '#8b5cf6' }}>
+              {editingId ? 'Update Task' : 'Add Task'}
+            </button>
             {editingId && <button type="button" className="btn-cancel" onClick={handleCancel}>Cancel</button>}
           </div>
         </form>
@@ -175,8 +219,14 @@ function Tasks({ token }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3>Your Tasks ({filteredTasks.length})</h3>
             <div style={{ display: 'flex', gap: '6px' }}>
-              {['all', 'pending', 'completed'].map(f => (
-                <button key={f} onClick={() => setFilter(f)} style={{ padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', background: filter === f ? '#8b5cf6' : '#e2e8f0', color: filter === f ? 'white' : '#64748b', fontWeight: filter === f ? 600 : 400 }}>
+              {['pending', 'completed', 'all'].map(f => (
+                <button key={f} onClick={() => setFilter(f)} style={{
+                  padding: '4px 12px', borderRadius: '20px', border: 'none',
+                  cursor: 'pointer',
+                  background: filter === f ? '#8b5cf6' : '#e2e8f0',
+                  color: filter === f ? 'white' : '#64748b',
+                  fontWeight: filter === f ? 600 : 400
+                }}>
                   {f.charAt(0).toUpperCase() + f.slice(1)}
                 </button>
               ))}
@@ -184,26 +234,61 @@ function Tasks({ token }) {
           </div>
 
           {filteredTasks.length === 0 ? (
-            <p style={{ color: '#64748b', marginTop: '10px' }}>No tasks found. Add your first task above!</p>
+            <p style={{ color: '#64748b', marginTop: '10px' }}>
+              {filter === 'pending' ? 'No pending tasks! Great job 🎉' : filter === 'completed' ? 'No completed tasks yet.' : 'No tasks found. Add your first task above!'}
+            </p>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0 }}>
               {filteredTasks.map(task => (
-                <li key={task._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px', borderRadius: '8px', marginBottom: '10px', background: task.isCompleted ? '#f0fdf4' : 'var(--card-bg, #f8fafc)', border: `1px solid ${task.isCompleted ? '#86efac' : '#e2e8f0'}`, opacity: task.isCompleted ? 0.8 : 1 }}>
+                <li key={task._id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '14px', borderRadius: '8px', marginBottom: '10px',
+                  background: task.isCompleted ? '#f0fdf4' : 'var(--card-bg, #f8fafc)',
+                  border: `1px solid ${task.isCompleted ? '#86efac' : '#e2e8f0'}`,
+                  opacity: task.isCompleted ? 0.85 : 1
+                }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                    <input type="checkbox" checked={task.isCompleted} onChange={() => handleToggle(task._id)} style={{ marginTop: '4px', accentColor: '#8b5cf6', width: '16px', height: '16px', cursor: 'pointer' }} />
+                    <input
+                      type="checkbox"
+                      checked={task.isCompleted}
+                      onChange={() => handleToggle(task._id)}
+                      style={{ marginTop: '4px', accentColor: '#8b5cf6', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
                     <div>
-                      <strong style={{ textDecoration: task.isCompleted ? 'line-through' : 'none', color: task.isCompleted ? '#94a3b8' : 'inherit' }}>{task.title}</strong>
-                      <span style={{ marginLeft: '8px', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '12px', background: priorityBg(task.priority), color: priorityColor(task.priority) }}>{task.priority}</span>
-                      <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>
-                        📅 Due: {new Date(task.dueDate).toLocaleDateString('en-IN')}
-                        {task.subject && <span style={{ marginLeft: '8px' }}>📚 {task.subject.name || 'Subject'}</span>}
+                      <strong style={{
+                        textDecoration: task.isCompleted ? 'line-through' : 'none',
+                        color: task.isCompleted ? '#94a3b8' : 'inherit'
+                      }}>
+                        {task.title}
+                      </strong>
+                      <span style={{
+                        marginLeft: '8px', fontSize: '0.75rem', padding: '2px 8px',
+                        borderRadius: '12px', background: priorityBg(task.priority),
+                        color: priorityColor(task.priority)
+                      }}>
+                        {task.priority}
+                      </span>
+                      <div style={{ fontSize: '0.85rem', marginTop: '4px', color: getDueDateColor(task.dueDate, task.isCompleted) }}>
+                        📅 Due: {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        <strong>{getDueDateLabel(task.dueDate, task.isCompleted)}</strong>
+                        {task.subject && <span style={{ marginLeft: '8px', color: '#64748b' }}>📚 {task.subject.name || 'Subject'}</span>}
                       </div>
-                      {task.description && <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>{task.description}</div>}
+                      {task.description && (
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>{task.description}</div>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px', flexShrink: 0, marginLeft: '10px' }}>
-                    {!task.isCompleted && <button onClick={() => handleEdit(task)} style={{ padding: '5px 10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Edit</button>}
-                    <button onClick={() => handleDelete(task._id)} style={{ padding: '5px 10px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}>Delete</button>
+                    {!task.isCompleted && (
+                      <button onClick={() => handleEdit(task)} style={{
+                        padding: '5px 10px', background: '#3b82f6', color: 'white',
+                        border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem'
+                      }}>Edit</button>
+                    )}
+                    <button onClick={() => handleDelete(task._id)} style={{
+                      padding: '5px 10px', background: '#ef4444', color: 'white',
+                      border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem'
+                    }}>Delete</button>
                   </div>
                 </li>
               ))}

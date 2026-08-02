@@ -13,7 +13,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { generateStudyPlan } = require('../controllers/planController');
+const { generateStudyPlan, getLatestPlan } = require('../controllers/planController');
 const { protect } = require('../middleware/authMiddleware');
 
 // POST /api/plan/generate
@@ -21,5 +21,9 @@ const { protect } = require('../middleware/authMiddleware');
 // The server uses that data to generate and RETURN the timetable.
 // We do NOT save the plan to the database — it is generated fresh on every request.
 router.post('/generate', protect, generateStudyPlan);
+
+// GET /api/plan/latest
+// Fetch the most recently saved study plan for the logged-in user
+router.get('/latest', protect, getLatestPlan);
 
 module.exports = router;

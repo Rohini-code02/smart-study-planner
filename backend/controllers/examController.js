@@ -5,7 +5,8 @@ const getExams = async (req, res) => {
     const exams = await Exam.find({ user: req.user._id }).populate('subject');
     res.status(200).json(exams);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching exams' });
+    console.error('Error fetching exams:', error);
+    res.status(500).json({ message: 'Error fetching exams', detail: error.message });
   }
 };
 
@@ -32,7 +33,8 @@ const createExam = async (req, res) => {
     const populatedExam = await Exam.findById(exam._id).populate('subject');
     res.status(201).json(populatedExam);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating exam' });
+    console.error('Error creating exam:', error);
+    res.status(500).json({ message: 'Error creating exam', detail: error.message });
   }
 };
 
