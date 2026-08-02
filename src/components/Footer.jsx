@@ -19,12 +19,12 @@ function Footer() {
         </div>
         <div className="footer-contact">
           <h4>Contact</h4>
-          <p>📧 support@smartstudyplanner.com</p>
-          <p>Built with ❤️ for students</p>
+          <p>📧 rohinigajula02@gmail.com</p>
+          <p>Built with ❤️ by Rohini Gajula</p>
         </div>
       </div>
       <div className="footer-bottom">
-        <p>&copy; 2026 Smart Study Planner. All rights reserved.</p>
+        <p>&copy; 2026 Rohini Gajula. All rights reserved.</p>
       </div>
     </footer>
   );
