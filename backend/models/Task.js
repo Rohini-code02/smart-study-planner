@@ -98,6 +98,18 @@ const taskSchema = new mongoose.Schema(
     },
 
     // ========================================================================
+    // FIELD 6.5: status
+    // ========================================================================
+    status: {
+      type: String,
+      enum: {
+        values: ['Pending', 'In Progress', 'Completed', 'Overdue'],
+        message: 'Status must be Pending, In Progress, Completed, or Overdue',
+      },
+      default: 'Pending',
+    },
+
+    // ========================================================================
     // FIELD 7: isCompleted (Task Status)
     // ========================================================================
     // EXPLAINING TASK STATUS:

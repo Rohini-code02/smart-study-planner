@@ -11,27 +11,38 @@ function Tasks({ token }) {
   const [tasks, setTasks] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [message, setMessage] = useState('');
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('all');
   const [editingId, setEditingId] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
 
+  const fetchData = async () => {
+    try {
+      // Fetch both and combine for now
+      const [pendingRes, completedRes, subjectRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/tasks/pending`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/api/tasks/completed`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/api/subjects`, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+      const pendingTasks = pendingRes.ok ? await pendingRes.json() : [];
+      const completedTasks = completedRes.ok ? await completedRes.json() : [];
+      
+      // Calculate overdue on the frontend dynamically
+      let combined = [...pendingTasks, ...completedTasks].map(t => {
+        if (!t.isCompleted && new Date(t.dueDate) < new Date(today)) {
+          return { ...t, status: 'Overdue' }; // Force Overdue if it's past due and not completed
+        }
+        return t;
+      });
+
+      setTasks(combined);
+      if (subjectRes.ok) setSubjects(await subjectRes.json());
+    } catch (err) {
+      console.error('Error fetching task data:', err);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [pendingRes, completedRes, subjectRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/tasks/pending`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_BASE_URL}/api/tasks/completed`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_BASE_URL}/api/subjects`, { headers: { 'Authorization': `Bearer ${token}` } })
-        ]);
-        const pendingTasks = pendingRes.ok ? await pendingRes.json() : [];
-        const completedTasks = completedRes.ok ? await completedRes.json() : [];
-        setTasks([...pendingTasks, ...completedTasks]);
-        if (subjectRes.ok) setSubjects(await subjectRes.json());
-      } catch (err) {
-        console.error('Error fetching task data:', err);
-      }
-    };
     if (token) fetchData();
   }, [token]);
 
@@ -46,7 +57,9 @@ function Tasks({ token }) {
       description: taskDesc,
       dueDate: taskDueDate,
       priority: taskPriority,
-      subject: selectedSubjectId || null
+      subject: selectedSubjectId || null,
+      status: 'Pending',
+      isCompleted: false
     };
     try {
       let res, data;
@@ -58,9 +71,9 @@ function Tasks({ token }) {
         });
         data = await res.json();
         if (res.ok) {
-          setTasks(tasks.map(t => t._id === editingId ? data : t));
           setMessage('Task updated!');
           setEditingId(null);
+          fetchData();
         } else {
           setMessage(data.message || 'Failed to update task.');
           return;
@@ -73,8 +86,8 @@ function Tasks({ token }) {
         });
         data = await res.json();
         if (res.ok) {
-          setTasks([...tasks, data]);
           setMessage('Task added successfully!');
+          fetchData();
         } else {
           setMessage(data.message || 'Failed to add task.');
           return;
@@ -87,14 +100,31 @@ function Tasks({ token }) {
     }
   };
 
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const isCompleted = newStatus === 'Completed';
+      const payload = { status: newStatus, isCompleted };
+      
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Error changing task status:', err);
+    }
+  };
+
   const handleToggle = async (taskId) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/toggle`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      if (res.ok) setTasks(tasks.map(t => t._id === taskId ? data : t));
+      if (res.ok) fetchData();
     } catch (err) {
       console.error('Error toggling task:', err);
     }
@@ -132,43 +162,49 @@ function Tasks({ token }) {
     setMessage('');
   };
 
-  // Fix 3: Filter tasks properly - pending shows only today+future due dates, completed shows recent
   const filteredTasks = tasks.filter(t => {
-    if (filter === 'pending') return !t.isCompleted;
+    if (filter === 'all') return true;
+    if (filter === 'pending') return t.status === 'Pending';
+    if (filter === 'in-progress') return t.status === 'In Progress';
     if (filter === 'completed') return t.isCompleted;
+    if (filter === 'overdue') return t.status === 'Overdue';
     return true;
   }).sort((a, b) => {
-    // Sort by due date ascending for pending, descending (newest) for completed
-    if (filter === 'completed') return new Date(b.completedAt || b.updatedAt) - new Date(a.completedAt || a.updatedAt);
+    if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
     return new Date(a.dueDate) - new Date(b.dueDate);
   });
 
   const priorityColor = (p) => p === 'High' ? '#dc2626' : p === 'Medium' ? '#d97706' : '#16a34a';
   const priorityBg = (p) => p === 'High' ? '#fee2e2' : p === 'Medium' ? '#fef3c7' : '#dcfce7';
-
-  const getDueDateColor = (dueDate, isCompleted) => {
-    if (isCompleted) return '#94a3b8';
-    const diff = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
-    if (diff < 0) return '#dc2626'; // overdue
-    if (diff === 0) return '#d97706'; // today
-    if (diff <= 3) return '#f59e0b'; // soon
-    return '#64748b';
+  
+  const statusColors = {
+    'Pending': { bg: '#e2e8f0', text: '#475569', border: '#cbd5e1' },
+    'In Progress': { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
+    'Completed': { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' },
+    'Overdue': { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' }
   };
 
-  const getDueDateLabel = (dueDate, isCompleted) => {
-    if (isCompleted) return '';
-    const diff = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
-    if (diff < 0) return ` (${Math.abs(diff)}d overdue)`;
-    if (diff === 0) return ' (Due Today!)';
-    if (diff <= 3) return ` (${diff}d left)`;
-    return '';
-  };
+  // Progress calculations
+  const totalTasks = tasks.length;
+  const completedCount = tasks.filter(t => t.isCompleted).length;
+  const progressPercent = totalTasks === 0 ? 0 : Math.round((completedCount / totalTasks) * 100);
 
   return (
     <div className="setup-container">
-      <div className="setup-box" style={{ maxWidth: '700px' }}>
-        <h2>✅ Tasks</h2>
-        <p className="setup-subtitle">Create and manage your personal study tasks.</p>
+      <div className="setup-box" style={{ maxWidth: '850px' }}>
+        <h2>✅ Task Management</h2>
+        <p className="setup-subtitle">Manage everything you need to do, track progress, and stay on top of deadlines.</p>
+
+        {/* Progress Indicator */}
+        <div style={{ marginBottom: '25px', padding: '15px', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <strong>Overall Progress</strong>
+            <strong>{progressPercent}% ({completedCount}/{totalTasks})</strong>
+          </div>
+          <div style={{ width: '100%', height: '12px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+            <div style={{ width: `${progressPercent}%`, height: '100%', background: 'var(--accent-primary)', transition: 'width 0.4s ease' }}></div>
+          </div>
+        </div>
 
         {message && (
           <p style={{
@@ -179,119 +215,147 @@ function Tasks({ token }) {
           </p>
         )}
 
-        <form onSubmit={handleSave} className="setup-form">
-          <div className="input-group">
-            <label>Task Title *</label>
-            <input type="text" placeholder="e.g., Read Chapter 5" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} />
+        <form onSubmit={handleSave} className="setup-form" style={{ background: 'var(--glass-bg)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <div className="input-group">
+              <label>Task Title *</label>
+              <input type="text" placeholder="e.g., Read Chapter 5" value={taskTitle} onChange={e => setTaskTitle(e.target.value)} />
+            </div>
+            <div className="input-group">
+              <label>Due Date *</label>
+              <input type="date" value={taskDueDate} min={today} onChange={e => setTaskDueDate(e.target.value)} />
+            </div>
           </div>
           <div className="input-group">
             <label>Description (Optional)</label>
             <input type="text" placeholder="Extra notes or details" value={taskDesc} onChange={e => setTaskDesc(e.target.value)} />
           </div>
-          <div className="input-group">
-            <label>Due Date *</label>
-            <input type="date" value={taskDueDate} min={today} onChange={e => setTaskDueDate(e.target.value)} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <div className="input-group">
+              <label>Priority</label>
+              <select value={taskPriority} onChange={e => setTaskPriority(e.target.value)}>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            <div className="input-group">
+              <label>Related Subject (Optional)</label>
+              <select value={selectedSubjectId} onChange={e => setSelectedSubjectId(e.target.value)}>
+                <option value="">-- None --</option>
+                {subjects.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="input-group">
-            <label>Priority</label>
-            <select value={taskPriority} onChange={e => setTaskPriority(e.target.value)}>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
-          </div>
-          <div className="input-group">
-            <label>Related Subject (Optional)</label>
-            <select value={selectedSubjectId} onChange={e => setSelectedSubjectId(e.target.value)}>
-              <option value="">-- None --</option>
-              {subjects.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-            </select>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button type="submit" className="btn-save" style={{ background: '#8b5cf6' }}>
-              {editingId ? 'Update Task' : 'Add Task'}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="submit" className="btn-save" style={{ background: 'var(--accent-primary)', flex: 1 }}>
+              {editingId ? 'Update Task' : 'Add New Task'}
             </button>
-            {editingId && <button type="button" className="btn-cancel" onClick={handleCancel}>Cancel</button>}
+            {editingId && <button type="button" className="btn-cancel" onClick={handleCancel} style={{ flex: 1 }}>Cancel Edit</button>}
           </div>
         </form>
 
-        <div style={{ marginTop: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <div style={{ marginTop: '40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
             <h3>Your Tasks ({filteredTasks.length})</h3>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {['pending', 'completed', 'all'].map(f => (
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {['all', 'pending', 'in-progress', 'completed', 'overdue'].map(f => (
                 <button key={f} onClick={() => setFilter(f)} style={{
-                  padding: '4px 12px', borderRadius: '20px', border: 'none',
-                  cursor: 'pointer',
-                  background: filter === f ? '#8b5cf6' : '#e2e8f0',
-                  color: filter === f ? 'white' : '#64748b',
-                  fontWeight: filter === f ? 600 : 400
+                  padding: '6px 14px', borderRadius: '20px', border: '1px solid var(--glass-border)',
+                  cursor: 'pointer', transition: 'all 0.2s',
+                  background: filter === f ? 'var(--accent-primary)' : 'var(--glass-bg)',
+                  color: filter === f ? 'white' : 'var(--text-secondary)',
+                  fontWeight: filter === f ? 600 : 500
                 }}>
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
+                  {f.replace('-', ' ').toUpperCase()}
                 </button>
               ))}
             </div>
           </div>
 
           {filteredTasks.length === 0 ? (
-            <p style={{ color: '#64748b', marginTop: '10px' }}>
-              {filter === 'pending' ? 'No pending tasks! Great job 🎉' : filter === 'completed' ? 'No completed tasks yet.' : 'No tasks found. Add your first task above!'}
-            </p>
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--glass-bg)', borderRadius: '16px', border: '1px dashed var(--glass-border)' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>No tasks found for this filter. 🎉</p>
+            </div>
           ) : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {filteredTasks.map(task => (
-                <li key={task._id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '14px', borderRadius: '8px', marginBottom: '10px',
-                  background: task.isCompleted ? '#f0fdf4' : 'var(--card-bg, #f8fafc)',
-                  border: `1px solid ${task.isCompleted ? '#86efac' : '#e2e8f0'}`,
-                  opacity: task.isCompleted ? 0.85 : 1
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                    <input
-                      type="checkbox"
-                      checked={task.isCompleted}
-                      onChange={() => handleToggle(task._id)}
-                      style={{ marginTop: '4px', accentColor: '#8b5cf6', width: '16px', height: '16px', cursor: 'pointer' }}
-                    />
-                    <div>
-                      <strong style={{
-                        textDecoration: task.isCompleted ? 'line-through' : 'none',
-                        color: task.isCompleted ? '#94a3b8' : 'inherit'
-                      }}>
-                        {task.title}
-                      </strong>
-                      <span style={{
-                        marginLeft: '8px', fontSize: '0.75rem', padding: '2px 8px',
-                        borderRadius: '12px', background: priorityBg(task.priority),
-                        color: priorityColor(task.priority)
-                      }}>
-                        {task.priority}
-                      </span>
-                      <div style={{ fontSize: '0.85rem', marginTop: '4px', color: getDueDateColor(task.dueDate, task.isCompleted) }}>
-                        📅 Due: {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        <strong>{getDueDateLabel(task.dueDate, task.isCompleted)}</strong>
-                        {task.subject && <span style={{ marginLeft: '8px', color: '#64748b' }}>📚 {task.subject.name || 'Subject'}</span>}
+            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {filteredTasks.map(task => {
+                const sColor = statusColors[task.status] || statusColors['Pending'];
+                return (
+                  <li key={task._id} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '16px', borderRadius: '12px',
+                    background: 'var(--glass-bg)',
+                    border: `2px solid ${sColor.border}`,
+                    borderLeft: `6px solid ${sColor.text}`,
+                    opacity: task.isCompleted ? 0.7 : 1,
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', flex: 1 }}>
+                      <input
+                        type="checkbox"
+                        checked={task.isCompleted}
+                        onChange={() => handleToggle(task._id)}
+                        style={{ marginTop: '5px', width: '20px', height: '20px', cursor: 'pointer' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <strong style={{
+                            fontSize: '1.1rem',
+                            textDecoration: task.isCompleted ? 'line-through' : 'none',
+                            color: 'var(--text-primary)'
+                          }}>
+                            {task.title}
+                          </strong>
+                          <span style={{
+                            fontSize: '0.75rem', padding: '3px 10px',
+                            borderRadius: '12px', background: priorityBg(task.priority),
+                            color: priorityColor(task.priority), fontWeight: 'bold'
+                          }}>
+                            {task.priority}
+                          </span>
+                          
+                          <select 
+                            value={task.status} 
+                            onChange={(e) => handleStatusChange(task._id, e.target.value)}
+                            style={{
+                              fontSize: '0.75rem', padding: '3px 10px',
+                              borderRadius: '12px', background: sColor.bg,
+                              color: sColor.text, border: 'none', fontWeight: 'bold', cursor: 'pointer', outline: 'none'
+                            }}
+                          >
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Overdue">Overdue</option>
+                          </select>
+                        </div>
+                        
+                        <div style={{ fontSize: '0.85rem', marginTop: '6px', color: 'var(--text-secondary)' }}>
+                          📅 Due: {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {task.subject && <span style={{ marginLeft: '12px', color: 'var(--accent-primary)', fontWeight: '500' }}>📚 {task.subject.name}</span>}
+                        </div>
+                        {task.description && (
+                          <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '6px' }}>{task.description}</div>
+                        )}
                       </div>
-                      {task.description && (
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>{task.description}</div>
-                      )}
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', flexShrink: 0, marginLeft: '10px' }}>
-                    {!task.isCompleted && (
-                      <button onClick={() => handleEdit(task)} style={{
-                        padding: '5px 10px', background: '#3b82f6', color: 'white',
-                        border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem'
-                      }}>Edit</button>
-                    )}
-                    <button onClick={() => handleDelete(task._id)} style={{
-                      padding: '5px 10px', background: '#ef4444', color: 'white',
-                      border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem'
-                    }}>Delete</button>
-                  </div>
-                </li>
-              ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, marginLeft: '15px' }}>
+                      {!task.isCompleted && (
+                        <button onClick={() => handleEdit(task)} style={{
+                          padding: '6px 14px', background: 'var(--glass-bg)', color: 'var(--accent-primary)',
+                          border: '1px solid var(--accent-primary)', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600'
+                        }}>Edit</button>
+                      )}
+                      <button onClick={() => handleDelete(task._id)} style={{
+                        padding: '6px 14px', background: '#fee2e2', color: '#b91c1c',
+                        border: '1px solid #fca5a5', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600'
+                      }}>Delete</button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

@@ -2,6 +2,8 @@
 // STUDY PLAN GENERATOR CONTROLLER (planController.js)
 // ============================================================================
 const StudyPlan = require('../models/StudyPlan');
+const Task = require('../models/Task');
+const mongoose = require('mongoose');
 
 const getDaysUntilExam = (examDate) => {
   const today = new Date();
@@ -58,11 +60,14 @@ const buildSession = (sessionName, startTime, availableHours, subjectQueue, adju
     const allocated = Math.min(needed, remainingHours);
 
     slots.push({
+      _id: new mongoose.Types.ObjectId(), // Inject unique ID for the slot
+      subjectId: subject._id || null,
       subjectName: subject.name,
       priority: subject.priority,
       difficulty: subject.difficulty,
       daysUntilExam: getDaysUntilExam(subject.examDate),
       hoursAllocated: allocated,
+      isCompleted: false, // Track completion
     });
 
     remainingHours -= allocated;
@@ -85,6 +90,7 @@ const buildSession = (sessionName, startTime, availableHours, subjectQueue, adju
 
 const generateStudyPlan = async (req, res) => {
   const { subjects, availableDailyHours } = req.body;
+  const userId = req.user._id;
 
   if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
     return res.status(400).json({ message: 'Please provide at least one subject.' });
@@ -152,13 +158,36 @@ const generateStudyPlan = async (req, res) => {
 
   try {
     const savedPlan = await StudyPlan.create({
-      user: req.user._id,
+      user: userId,
       date: new Date(),
       totalHours: availableDailyHours,
       morningSession: morningSession.subjects,
       afternoonSession: afternoonSession.subjects,
       eveningSession: eveningSession.subjects,
     });
+
+    // Extract all slots to create Tasks
+    const allSlots = [
+      ...morningSession.subjects,
+      ...afternoonSession.subjects,
+      ...eveningSession.subjects
+    ];
+
+    const today = new Date();
+    const tasksToCreate = allSlots.map(slot => ({
+      user: userId,
+      subject: slot.subjectId,
+      title: `Study Session: ${slot.subjectName} (${slot.hoursAllocated} hrs)`,
+      description: `Auto-generated study session from AI Study Planner.`,
+      dueDate: today,
+      priority: slot.priority === 'High' ? 'High' : slot.priority === 'Low' ? 'Low' : 'Medium',
+      status: 'Pending',
+      isCompleted: false
+    }));
+
+    if (tasksToCreate.length > 0) {
+      await Task.insertMany(tasksToCreate);
+    }
 
     res.status(200).json({ planData, savedPlanId: savedPlan._id });
   } catch (dbError) {
@@ -224,4 +253,53 @@ const updateCustomPlan = async (req, res) => {
   }
 };
 
-module.exports = { generateStudyPlan, getLatestPlan, updateCustomPlan };
+const toggleSlotStatus = async (req, res) => {
+  try {
+    const { planId, slotId } = req.params;
+    
+    const plan = await StudyPlan.findOne({ _id: planId, user: req.user._id });
+    if (!plan) {
+      return res.status(404).json({ message: 'Plan not found' });
+    }
+
+    let found = false;
+    let newStatus = false;
+
+    // Helper to toggle inside an array
+    const toggleInArray = (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i]._id && arr[i]._id.toString() === slotId) {
+          arr[i].isCompleted = !arr[i].isCompleted;
+          newStatus = arr[i].isCompleted;
+          found = true;
+          return true;
+        }
+      }
+      return false;
+    };
+
+    if (!toggleInArray(plan.morningSession)) {
+      if (!toggleInArray(plan.afternoonSession)) {
+        toggleInArray(plan.eveningSession);
+      }
+    }
+
+    if (!found) {
+      return res.status(404).json({ message: 'Slot not found in plan' });
+    }
+
+    // Mongoose needs to be told the mixed type arrays changed
+    plan.markModified('morningSession');
+    plan.markModified('afternoonSession');
+    plan.markModified('eveningSession');
+    
+    await plan.save();
+
+    res.status(200).json({ message: 'Slot toggled successfully', isCompleted: newStatus });
+  } catch (error) {
+    console.error('Error toggling slot:', error);
+    res.status(500).json({ message: 'Error toggling slot status' });
+  }
+};
+
+module.exports = { generateStudyPlan, getLatestPlan, updateCustomPlan, toggleSlotStatus };

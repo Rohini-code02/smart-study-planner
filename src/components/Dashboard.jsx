@@ -116,31 +116,40 @@ function Dashboard({ setCurrentPage, token }) {
       {/* =======================================================================
           PROGRESS CARDS SECTION
           ======================================================================= */}
-      <section className="dashboard-cards">
+      <section className="dashboard-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
         
         {/* Card 1: Study Hours */}
-        <div className="stat-card">
-          <h3>Study Hours</h3>
-          <p className="stat-value">{stats ? stats.studyHours.actual.toFixed(1) : 0} hrs</p>
-          <p className="stat-subtitle">Actual Completed</p>
+        <div className="stat-card" style={{ background: 'var(--glass-bg)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+          <h3 style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '10px' }}>Study Hours</h3>
+          <p className="stat-value" style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{stats ? stats.studyHours.actual.toFixed(1) : 0} <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>hrs</span></p>
+          <p className="stat-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '5px' }}>Actual Completed</p>
         </div>
 
-        {/* Card 2: Tasks Completed */}
-        <div className="stat-card">
-          <h3>Tasks Completed</h3>
-          <p className="stat-value">{stats ? stats.tasks.completedThisWeek : 0} / {stats ? stats.weeklyProgress.weeklyTarget : 0}</p>
-          <p className="stat-subtitle">This week</p>
+        {/* Card 2: Streak */}
+        <div className="stat-card" style={{ background: 'var(--glass-bg)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+          <h3 style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '10px' }}>Current Streak 🔥</h3>
+          <p className="stat-value" style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{stats && stats.streaks ? stats.streaks.current : 0} <span style={{fontSize:'1rem', color:'var(--text-muted)'}}>days</span></p>
+          <p className="stat-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '5px' }}>
+            Best: {stats && stats.streaks ? stats.streaks.longest : 0} days
+          </p>
         </div>
 
-        {/* Card 3: Upcoming Exams */}
-        <div className="stat-card">
-          <h3>Next Exam</h3>
-          <p className="stat-value">
+        {/* Card 3: Tasks Completed */}
+        <div className="stat-card" style={{ background: 'var(--glass-bg)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+          <h3 style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '10px' }}>Tasks Completed</h3>
+          <p className="stat-value" style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10b981' }}>{stats ? stats.tasks.completedThisWeek : 0} <span style={{fontSize:'1.5rem', color:'var(--text-muted)'}}>/ {stats ? stats.weeklyProgress.weeklyTarget : 0}</span></p>
+          <p className="stat-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '5px' }}>This week</p>
+        </div>
+
+        {/* Card 4: Upcoming Exams */}
+        <div className="stat-card" style={{ background: 'var(--glass-bg)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center' }}>
+          <h3 style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '10px' }}>Next Exam</h3>
+          <p className="stat-value" style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ef4444', minHeight: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {stats && stats.subjects.upcomingExams.length > 0 
               ? stats.subjects.upcomingExams[0].name 
               : "None"}
           </p>
-          <p className="stat-subtitle">
+          <p className="stat-subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '5px' }}>
             {stats && stats.subjects.upcomingExams.length > 0 
               ? `In ${stats.subjects.upcomingExams[0].daysLeft} days` 
               : "No upcoming exams"}

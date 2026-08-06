@@ -86,6 +86,22 @@ const progressSchema = new mongoose.Schema(
       min: [0, 'Percentage cannot be below 0'],
       max: [100, 'Percentage cannot exceed 100'],
     },
+
+    // ========================================================================
+    // FIELD 6: STREAKS
+    // ========================================================================
+    currentStreak: {
+      type: Number,
+      default: 0,
+    },
+    longestStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastActiveDate: {
+      type: Date,
+      default: null,
+    },
   },
   {
     // ========================================================================

@@ -13,7 +13,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { generateStudyPlan, getLatestPlan, updateCustomPlan } = require('../controllers/planController');
+const { generateStudyPlan, getLatestPlan, updateCustomPlan, toggleSlotStatus } = require('../controllers/planController');
 const { protect } = require('../middleware/authMiddleware');
 
 // POST /api/plan/generate
@@ -29,5 +29,9 @@ router.get('/latest', protect, getLatestPlan);
 // PUT /api/plan/custom
 // Update the user's latest saved plan with custom changes
 router.put('/custom', protect, updateCustomPlan);
+
+// PATCH /api/plan/:planId/toggle-slot/:slotId
+// Toggle completion status of a specific slot in the plan
+router.patch('/:planId/toggle-slot/:slotId', protect, toggleSlotStatus);
 
 module.exports = router;

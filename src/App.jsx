@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import Hero from './components/Hero';
 import Features from './components/Features';
 import About from './components/About';
@@ -45,19 +46,34 @@ function App() {
     }
   };
 
+  const isLoggedIn = !!token;
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <div className="app-container">
-        <Navbar
-          setCurrentPage={setCurrentPage}
-          currentPage={currentPage}
-          token={token}
-          handleSetToken={handleSetToken}
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
+      <div className={`app-container ${isLoggedIn ? 'app-logged-in' : ''}`}>
+        
+        {isLoggedIn ? (
+          <Sidebar
+            setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
+            token={token}
+            handleSetToken={handleSetToken}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          />
+        ) : (
+          <Navbar
+            setCurrentPage={setCurrentPage}
+            currentPage={currentPage}
+            token={token}
+            handleSetToken={handleSetToken}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          />
+        )}
 
-        {currentPage === 'login' && <Login setCurrentPage={setCurrentPage} handleSetToken={handleSetToken} />}
+        <main className={`main-content ${isLoggedIn ? 'main-logged-in' : ''}`}>
+          {currentPage === 'login' && <Login setCurrentPage={setCurrentPage} handleSetToken={handleSetToken} />}
         {currentPage === 'signup' && <Signup setCurrentPage={setCurrentPage} handleSetToken={handleSetToken} />}
         {currentPage === 'dashboard' && <Dashboard setCurrentPage={setCurrentPage} token={token} />}
         {currentPage === 'subjects' && <Subjects setCurrentPage={setCurrentPage} token={token} />}
@@ -77,6 +93,7 @@ function App() {
             <Footer />
           </>
         )}
+        </main>
       </div>
     </GoogleOAuthProvider>
   );

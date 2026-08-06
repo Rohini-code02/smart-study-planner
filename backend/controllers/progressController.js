@@ -73,13 +73,66 @@ const getDashboardStats = async (req, res) => {
       easy: allSubjects.filter((s) => s.difficulty === 'Easy').length,
     };
 
+    // Calculate Streaks
+    // Get current progress doc before update to read lastActiveDate
+    let currentProgress = await Progress.findOne({ user: userId });
+    let currentStreak = currentProgress ? currentProgress.currentStreak || 0 : 0;
+    let longestStreak = currentProgress ? currentProgress.longestStreak || 0 : 0;
+    
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (currentProgress && currentProgress.lastActiveDate) {
+      const lastActive = new Date(currentProgress.lastActiveDate);
+      lastActive.setHours(0,0,0,0);
+
+      // If they were last active yesterday, streak continues (if they are active today, it increments)
+      // If they were last active before yesterday, streak is broken.
+      if (lastActive < yesterday) {
+        currentStreak = 0; // Streak broken
+      }
+    }
+
+    // We consider them "active" if they have completed tasks this week (or today) - for simplicity we'll just check if they completed tasks today
+    const tasksCompletedToday = await Task.countDocuments({
+      user: userId,
+      isCompleted: true,
+      completedAt: { $gte: today },
+    });
+
+    let newLastActiveDate = currentProgress ? currentProgress.lastActiveDate : null;
+    
+    if (tasksCompletedToday > 0) {
+      if (!currentProgress || !currentProgress.lastActiveDate) {
+        currentStreak = 1;
+      } else {
+        const lastActive = new Date(currentProgress.lastActiveDate);
+        lastActive.setHours(0,0,0,0);
+        if (lastActive.getTime() === yesterday.getTime()) {
+           currentStreak += 1;
+        } else if (lastActive.getTime() < yesterday.getTime()) {
+           currentStreak = 1;
+        }
+        // If lastActive is today, streak stays the same
+      }
+      newLastActiveDate = new Date();
+      if (currentStreak > longestStreak) {
+        longestStreak = currentStreak;
+      }
+    }
+
     const progressDoc = await Progress.findOneAndUpdate(
       { user: userId },
       {
         completedTasks: completedTasks,
         pendingTasks: pendingTasks,
         totalStudyHours: parseFloat(totalDailyStudyHours.toFixed(1)),
-        progressPercentage: completionPercentage
+        progressPercentage: completionPercentage,
+        currentStreak: currentStreak,
+        longestStreak: longestStreak,
+        lastActiveDate: newLastActiveDate
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -102,6 +155,10 @@ const getDashboardStats = async (req, res) => {
         weeklyTarget,
         weeklyProgressPercentage,
         weekStartDate: weekStart.toISOString().split('T')[0],
+      },
+      streaks: {
+        current: currentStreak,
+        longest: longestStreak
       },
       subjects: {
         total: allSubjects.length,

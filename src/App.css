@@ -7,37 +7,37 @@
 /* LIGHT GLASSMORPHISM VARIABLES */
 :root {
   --bg-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.8);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --accent-primary: #6366f1;
-  --accent-hover: #4f46e5;
+  --text-primary: #0f172a; /* Darker for better contrast */
+  --text-secondary: #334155; /* Darker for better contrast */
+  --text-muted: #475569;
+  --accent-primary: #4f46e5;
+  --accent-hover: #4338ca;
   --accent-warning: #f59e0b;
   --accent-warning-hover: #d97706;
   --border-radius: 16px;
-  --footer-bg: rgba(255, 255, 255, 0.3);
-  --footer-text: #475569;
+  --footer-bg: rgba(255, 255, 255, 0.4);
+  --footer-text: #334155;
 }
 
 /* DARK GLASSMORPHISM VARIABLES */
 [data-theme='dark'] {
   --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  --glass-bg: rgba(30, 41, 59, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;
   --text-muted: #94a3b8;
   --accent-primary: #818cf8;
   --accent-hover: #6366f1;
   --accent-warning: #fbbf24;
   --accent-warning-hover: #f59e0b;
   --border-radius: 16px;
-  --footer-bg: rgba(0, 0, 0, 0.2);
-  --footer-text: #cbd5e1;
+  --footer-bg: rgba(0, 0, 0, 0.3);
+  --footer-text: #e2e8f0;
 }
 
 * {
@@ -333,6 +333,39 @@ button:active {
   font-size: 0.95rem;
   border-top: 1px solid var(--glass-border);
 }
+
+/* ==========================================================================
+   GLOBAL LAYOUT & VARIABLES
+   ========================================================================== */
+
+/* Main layout wrapper */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+/* Logged In Layout */
+.app-logged-in {
+  flex-direction: row;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  transition: padding-left 0.3s ease;
+}
+
+.main-logged-in {
+  padding-left: 260px; /* Width of the sidebar */
+}
+
+@media (max-width: 1024px) {
+  .main-logged-in {
+    padding-left: 0;
+  }
+} 
 
 /* ==========================================================================
    7. RESPONSIVE DESIGN
