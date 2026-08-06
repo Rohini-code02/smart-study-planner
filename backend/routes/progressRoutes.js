@@ -14,7 +14,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { getDashboardStats, getWeeklyBreakdown } = require('../controllers/progressController');
+const { getDashboardStats, getWeeklyBreakdown, logPomodoroSession } = require('../controllers/progressController');
 const { protect } = require('../middleware/authMiddleware');
 
 // GET /api/progress/stats
@@ -25,5 +25,9 @@ router.get('/stats', protect, getDashboardStats);
 // GET /api/progress/weekly
 // Returns: day-by-day breakdown of tasks completed this week (for the bar chart)
 router.get('/weekly', protect, getWeeklyBreakdown);
+
+// POST /api/progress/pomodoro
+// Logs completed pomodoro session time to the database
+router.post('/pomodoro', protect, logPomodoroSession);
 
 module.exports = router;

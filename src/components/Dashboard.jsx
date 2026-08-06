@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // ============================================================================
 // CSS IMPORT
@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
 import API_BASE_URL from '../config/api.js';
+import PomodoroTimer from './PomodoroTimer';
 
 // ============================================================================
 // DASHBOARD COMPONENT
@@ -23,55 +24,52 @@ function Dashboard({ setCurrentPage, token }) {
   const [tasks, setTasks] = useState([]);
 
   // ==========================================================================
-  // USEEFFECT & FETCHING DATA
+  // FETCHING DATA
   // ==========================================================================
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      // 1. Fetch User Profile (to get the name)
+      const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const userData = await userRes.json();
+      if (userRes.ok) setUserName(userData.name);
+
+      // 2. Fetch Progress Stats (for the cards and upcoming exams)
+      const statsRes = await fetch(`${API_BASE_URL}/api/progress/stats`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const statsData = await statsRes.json();
+      if (statsRes.ok) setStats(statsData);
+
+      // 3. Fetch Pending Tasks (for the checklist)
+      const tasksRes = await fetch(`${API_BASE_URL}/api/tasks/pending`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const tasksData = await tasksRes.json();
+      if (tasksRes.ok) setTasks(tasksData);
+
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    }
+  }, [token]);
+
   // Why useEffect is used here:
   // We want to fetch data from the server EXACTLY ONCE when the Dashboard first loads.
-  // The empty array [] at the end means "run this only on the first render".
   useEffect(() => {
-    // We define an async function inside useEffect to handle our API calls
-    const fetchDashboardData = async () => {
-      try {
-        // 1. Fetch User Profile (to get the name)
-        // We must include the JWT token in the Authorization header so the server knows who we are!
-        const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const userData = await userRes.json();
-        if (userRes.ok) setUserName(userData.name);
-
-        // 2. Fetch Progress Stats (for the cards and upcoming exams)
-        const statsRes = await fetch(`${API_BASE_URL}/api/progress/stats`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const statsData = await statsRes.json();
-        if (statsRes.ok) setStats(statsData);
-
-        // 3. Fetch Pending Tasks (for the checklist)
-        const tasksRes = await fetch(`${API_BASE_URL}/api/tasks/pending`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const tasksData = await tasksRes.json();
-        if (tasksRes.ok) setTasks(tasksData);
-
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
-    };
-
     if (token) {
       fetchDashboardData();
     }
-  }, [token]);
+  }, [token, fetchDashboardData]);
 
   // Helper function to handle clicking a task checkbox
   const handleToggleTask = async (taskId) => {
@@ -118,21 +116,13 @@ function Dashboard({ setCurrentPage, token }) {
       {/* =======================================================================
           PROGRESS CARDS SECTION
           ======================================================================= */}
-      {/* 
-        Why this section exists:
-        To show high-level metrics quickly at the very top of the screen.
-        
-        Why each Card is used:
-        Cards break down complex numbers into bite-sized, visually distinct boxes.
-        This makes it incredibly easy for the user's brain to process their progress instantly.
-      */}
       <section className="dashboard-cards">
         
         {/* Card 1: Study Hours */}
         <div className="stat-card">
           <h3>Study Hours</h3>
-          <p className="stat-value">{stats ? stats.studyHours.weeklyEstimate : 0} hrs</p>
-          <p className="stat-subtitle">This week</p>
+          <p className="stat-value">{stats ? stats.studyHours.actual.toFixed(1) : 0} hrs</p>
+          <p className="stat-subtitle">Actual Completed</p>
         </div>
 
         {/* Card 2: Tasks Completed */}
@@ -159,6 +149,9 @@ function Dashboard({ setCurrentPage, token }) {
 
       </section>
 
+      {/* POMODORO TIMER SECTION */}
+      <PomodoroTimer token={token} onSessionComplete={fetchDashboardData} />
+
       {/* 
         We use a specific div container below to apply CSS Grid layout.
         This allows the Tasks and Exams sections to sit side-by-side on wide screens.
@@ -168,11 +161,6 @@ function Dashboard({ setCurrentPage, token }) {
         {/* =======================================================================
             TODAY'S TASKS SECTION
             ======================================================================= */}
-        {/* 
-          Why this section exists:
-          To give the user a clear, actionable list of what they need to accomplish today.
-          A checklist helps users stay organized and feel productive.
-        */}
         <section className="dashboard-list-section">
           <h3>📝 Pending Tasks</h3>
           <ul className="task-list">
@@ -197,10 +185,6 @@ function Dashboard({ setCurrentPage, token }) {
         {/* =======================================================================
             UPCOMING EXAMS SECTION
             ======================================================================= */}
-        {/* 
-          Why this section exists:
-          To keep the user prepared for important deadlines so nothing sneaks up on them.
-        */}
         <section className="dashboard-list-section">
           <h3>📅 Upcoming Exams</h3>
           <ul className="exam-list">
@@ -224,11 +208,6 @@ function Dashboard({ setCurrentPage, token }) {
       {/* =======================================================================
           QUICK ACTIONS SECTION
           ======================================================================= */}
-      {/* 
-        Why this section exists:
-        To provide fast shortcuts to the most common actions a user might want to take 
-        (like adding a new task), saving them time navigating through menus.
-      */}
       <section className="dashboard-quick-actions">
         <h3>⚡ Quick Actions</h3>
         <div className="actions-buttons">

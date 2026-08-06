@@ -56,10 +56,19 @@ const progressSchema = new mongoose.Schema(
     // ========================================================================
     // FIELD 4: totalStudyHours
     // ========================================================================
-    // Why it exists: Keeps track of the total number of hours the user has 
-    // spent studying. This is great for gamification (e.g., "You've studied 100 hours!").
+    // Why it exists: Keeps track of the planned total number of hours the user 
+    // has from their generated study plan.
     // - type: Number allows decimals (e.g., 1.5 hours).
     totalStudyHours: {
+      type: Number,
+      default: 0,
+    },
+
+    // ========================================================================
+    // FIELD: actualStudyHours
+    // ========================================================================
+    // Why it exists: Keeps track of actual hours tracked via the Pomodoro Timer.
+    actualStudyHours: {
       type: Number,
       default: 0,
     },

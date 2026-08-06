@@ -73,7 +73,7 @@ const getDashboardStats = async (req, res) => {
       easy: allSubjects.filter((s) => s.difficulty === 'Easy').length,
     };
 
-    await Progress.findOneAndUpdate(
+    const progressDoc = await Progress.findOneAndUpdate(
       { user: userId },
       {
         completedTasks: completedTasks,
@@ -81,7 +81,7 @@ const getDashboardStats = async (req, res) => {
         totalStudyHours: parseFloat(totalDailyStudyHours.toFixed(1)),
         progressPercentage: completionPercentage
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     res.status(200).json({
@@ -95,6 +95,7 @@ const getDashboardStats = async (req, res) => {
       studyHours: {
         dailyCommitment: parseFloat(totalDailyStudyHours.toFixed(1)),
         weeklyEstimate: weeklyStudyHours,
+        actual: progressDoc ? progressDoc.actualStudyHours : 0,
       },
       weeklyProgress: {
         tasksCompletedThisWeek,
@@ -159,4 +160,31 @@ const getWeeklyBreakdown = async (req, res) => {
   }
 };
 
-module.exports = { getDashboardStats, getWeeklyBreakdown };
+const logPomodoroSession = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { duration } = req.body; // duration in minutes
+
+    if (!duration || typeof duration !== 'number') {
+      return res.status(400).json({ message: 'Valid duration in minutes is required' });
+    }
+
+    const durationInHours = duration / 60;
+
+    const updatedProgress = await Progress.findOneAndUpdate(
+      { user: userId },
+      { $inc: { actualStudyHours: durationInHours } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({
+      message: 'Pomodoro session logged successfully',
+      actualStudyHours: updatedProgress.actualStudyHours
+    });
+  } catch (error) {
+    console.error('Error logging pomodoro session:', error);
+    res.status(500).json({ message: 'Server error while logging session' });
+  }
+};
+
+module.exports = { getDashboardStats, getWeeklyBreakdown, logPomodoroSession };
