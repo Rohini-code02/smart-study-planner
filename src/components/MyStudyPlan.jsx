@@ -29,17 +29,44 @@ function MyStudyPlan({ setCurrentPage, token }) {
   }, [token]);
 
   const handleToggleSlot = async (planId, slotId) => {
+    // Optimistic UI Update
+    const originalPlan = JSON.parse(JSON.stringify(plan)); // Deep copy for rollback
+    
+    // Update local state immediately
+    const updatedPlan = { ...plan };
+    let found = false;
+    updatedPlan.timetable = updatedPlan.timetable.map(session => {
+      return {
+        ...session,
+        subjects: session.subjects.map(slot => {
+          if (slot._id === slotId) {
+            found = true;
+            return { ...slot, isCompleted: !slot.isCompleted };
+          }
+          return slot;
+        })
+      };
+    });
+    
+    if (found) {
+      setPlan(updatedPlan);
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/plan/${planId}/toggle-slot/${slotId}`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        // Re-fetch to update state
-        fetchLatestPlan();
+      
+      if (!res.ok) {
+        // Rollback if the API fails
+        setPlan(originalPlan);
+        console.error("Failed to toggle slot on server");
       }
     } catch (error) {
       console.error("Error toggling slot:", error);
+      // Rollback on network error
+      setPlan(originalPlan);
     }
   };
 
@@ -103,7 +130,9 @@ function MyStudyPlan({ setCurrentPage, token }) {
                       style={{ cursor: 'pointer', width: '20px', height: '20px' }}
                     />
                     <div style={{ flex: 1, textDecoration: slot.isCompleted ? 'line-through' : 'none', opacity: slot.isCompleted ? 0.6 : 1 }}>
-                      <strong style={{ display: 'block', color: 'var(--accent-primary)' }}>{slot.subjectName}</strong>
+                      <strong style={{ display: 'block', color: 'var(--accent-primary)' }}>
+                        {slot.subjectName} {slot.isCompleted && <span style={{ color: '#22c55e', marginLeft: '5px' }}>✅</span>}
+                      </strong>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                         {slot.hoursAllocated} hrs • {slot.difficulty} • Priority: {slot.priority}
                       </span>
